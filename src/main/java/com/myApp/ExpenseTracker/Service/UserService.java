@@ -10,14 +10,17 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final AuditService auditService;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-    public UserService(UserRepository userRepository){
+    public UserService(UserRepository userRepository,AuditService  audit){
         this.userRepository = userRepository;
+        this.auditService = audit;
     }
     @Transactional(readOnly = true)
     public boolean login(String username , String password){
@@ -30,6 +33,11 @@ public class UserService {
         boolean success = BCrypt.checkpw(password, user.getPassword());
         logger.atInfo().log("Login attempt for username {} : {}",
                 username, success ? "SUCCESS" : "FAILED");
+        if(success){
+            auditService.logSuccess(user.getId(), EntityType.USER,user.getId(),Status.LOGGED.name());
+        }else{
+            auditService.logFailure(user.getId(), EntityType.USER,user.getId(),Status.LOGIN_FAILED.name());
+        }
         return success;
     }
     @Transactional
@@ -44,9 +52,21 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setName(dto.getName());
         user.setPassword(hashedPassword);
+        user.setBalance(BigDecimal.valueOf(0.0));
         userRepository.save(user);
         logger.atInfo().log("Registration successful for username {}", dto.getUsername());
+        Optional<User> userOpt = userRepository.findByUsername(dto.getUsername());
+        userOpt.ifPresent(value -> auditService.logSuccess(value.getId(), EntityType.USER, value.getId(), Status.REGISTERED.name()));
         return Status.CREATED;
     }
-
+    @Transactional
+    public Status addIncome(long userid , BigDecimal amnt){
+        if(userRepository.increaseBalance(userid , amnt) > 0){
+            logger.atInfo().log("Income added successful for user {}" , userid);
+            auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());
+            return Status.SUCCESS;
+        }
+        logger.atWarn().log("Income adding failed for user {}" , userid);
+        return Status.FAILED;
+    }
 }

@@ -3,6 +3,7 @@ package com.myApp.ExpenseTracker.Model;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -28,16 +29,15 @@ public class User {
     @Column(name = "EMAIL", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "CREATED_AT", nullable = false, updatable = false)
+    @Column(  name = "CREATED_AT",
+            nullable = false,
+            updatable = false,
+            insertable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "BALANCE" , nullable = false)
-    private double Balance;
+    @Column(name = "BALANCE" , nullable = false, precision = 18, scale = 2)
+    private BigDecimal balance;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
     public void setEmail(String email) {
         this.email = email;
     }
@@ -51,5 +51,8 @@ public class User {
     }
     public void setUsername(String username) {
         this.username = username;
+    }
+    public void setBalance(BigDecimal balance){
+        this.balance = balance;
     }
 }

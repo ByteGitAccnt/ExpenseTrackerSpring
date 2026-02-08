@@ -1,5 +1,6 @@
 package com.myApp.ExpenseTracker.Controller;
 
+import com.myApp.ExpenseTracker.Dto.AddIncomeRequest;
 import com.myApp.ExpenseTracker.Dto.LoginRequest;
 import com.myApp.ExpenseTracker.Dto.RegisterRequest;
 import com.myApp.ExpenseTracker.Service.Status;
@@ -51,6 +52,16 @@ public class AuthController {
             return ResponseEntity.ok().build();
         }
         logger.atWarn().log("Register failed for username={}", req.getUsername());
+        return ResponseEntity.badRequest().body(status.name());
+    }
+    @PostMapping("/income")
+    public  ResponseEntity<?> addIncome(@Valid @RequestBody AddIncomeRequest req){
+        logger.atInfo().log("Add Income request received for username={}", req.getUserid());
+        Status status = userService.addIncome(req.getUserid(), req.getAmount());
+        if(status == Status.SUCCESS){
+            logger.atInfo().log("Income added for username={}", req.getUserid());
+            return ResponseEntity.ok().build();
+        }
         return ResponseEntity.badRequest().body(status.name());
     }
 }

@@ -1,4 +1,4 @@
-package com.myApp.ExpenseTracker;
+package com.myApp.ExpenseTracker.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +19,7 @@ public class SecurityConfig {
                 // Define authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login",
-                                "/api/auth/register")
+                                "/api/auth/register" , "/api/auth/income")
                         .permitAll()
                         .anyRequest()
                         .authenticated()
