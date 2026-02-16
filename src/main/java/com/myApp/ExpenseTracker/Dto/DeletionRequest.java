@@ -4,10 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
 @Getter
-public class LoginRequest {
+public class DeletionRequest {
     @NotBlank
-    private String username;
-    @NotBlank
-    private String password;
-
+    private String label;
 }

@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -15,18 +17,18 @@ public class CategoryService {
     private final AuditService auditService;
     private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
     private final CategoryRepository catRepo;
-    public CategoryService(CategoryRepository catRepo,AuditService auditService){
+    public CategoryService(CategoryRepository catRepo,AuditService auditService ){
         this.auditService = auditService;
         this.catRepo = catRepo;
     }
-    public Category addCategory(Long userid , String catname){
+    public Category addCategory(Long userid,String catname){
         Category  cat = catRepo.save(new Category(catname,userid));
         logger.atInfo().log("Category created: {} for user: {}" ,catname , userid);
         auditService.logSuccess(userid,EntityType.CATEGORY,cat.getId(),"Category created: " + cat.getName());
         return cat;
     }
     @Transactional
-    public Category findOrCreate(String catName,Long userId) {
+    public Category findOrCreate(Long userId,String catName) {
         if (catRepo.existsByNameAndUserId(catName.toLowerCase(), userId)) {
             Optional<Category> opCat = catRepo.findByNameAndUserId(catName.toLowerCase(), userId);
             return opCat.orElse(null);
@@ -35,14 +37,14 @@ public class CategoryService {
         }
     }
     @Transactional
-    public Status updateCategory(Long userId , String oldname , String newname){
+    public Status updateCategory( Long userId,String oldname , String newname){
         if(oldname.equalsIgnoreCase(newname)){
             logger.atWarn().log("Category updation failed , old name and new name are same for user {}" , userId);
             return Status.FAILED;
         }
         if(catRepo.existsByNameAndUserId(newname.toLowerCase(), userId)){
             logger.atWarn().log("Category updation failed , new name already exists for user {}" , userId);
-            return Status.FAILED;
+            return Status.ALREADY_EXISTS;
         }
         Optional<Category> opCat = catRepo.findByNameAndUserId(oldname.toLowerCase(), userId);
         boolean[] success = new boolean[1];
@@ -57,13 +59,14 @@ public class CategoryService {
         if(success[0]){
             catRepo.save(opCat.get()) ;
             logger.atInfo().log("Category Updated successful for user: {} from {} to {}",userId,oldname,newname);
+            return Status.UPDATED;
         }
         logger.atWarn().log("Category updation failed , for user {}, Not found category {}" , userId,oldname);
         return Status.FAILED;
     }
     @Transactional
-    public Status deleteCategory(Long userid , String name){
-        Optional<Category> opCat = catRepo.findByNameAndUserId(name , userid);
+    public Status deleteCategory(Long userid, String name){
+        Optional<Category> opCat = catRepo.findByNameAndUserId(name.toLowerCase() , userid);
         if(opCat.isPresent()){
          Category cat = opCat.get();
          catRepo.delete(cat);
@@ -74,6 +77,12 @@ public class CategoryService {
         auditService.logFailure(userid,EntityType.CATEGORY,null, "Category not found");
         logger.atWarn().log("Category {} deleted failed for user {}" , name , userid);
         return Status.FAILED;
+    }
+    public List<Category> listCategory(Long userid){
+        List<Category> categoryList = catRepo.findByUserId(userid);
+        if (!categoryList.isEmpty())return categoryList;
+        logger.atWarn().log("Category List don't exist for user {}" , userid);
+        return new ArrayList<>();
     }
 }
 

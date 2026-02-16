@@ -19,7 +19,8 @@ public class SecurityConfig {
                 // Define authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login",
-                                "/api/auth/register" , "/api/auth/income")
+                                "/api/auth/register" , "/api/auth/income",
+                        "/api/reserve" , "/api/reserve/deposit" , "/api/reserve/withdraw")
                         .permitAll()
                         .anyRequest()
                         .authenticated()
