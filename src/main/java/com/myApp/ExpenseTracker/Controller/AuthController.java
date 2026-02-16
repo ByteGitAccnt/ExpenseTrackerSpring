@@ -1,8 +1,9 @@
 package com.myApp.ExpenseTracker.Controller;
 
-import com.myApp.ExpenseTracker.Dto.AddIncomeRequest;
+import com.myApp.ExpenseTracker.Dto.AddMoneyRequest;
 import com.myApp.ExpenseTracker.Dto.LoginRequest;
 import com.myApp.ExpenseTracker.Dto.RegisterRequest;
+import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.Status;
 import com.myApp.ExpenseTracker.Service.UserService;
 import jakarta.validation.Valid;
@@ -20,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final UserService userService;
+    private final CurrentUserProvider currentUserProvider;
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    public AuthController(UserService userService) {
+    public AuthController(UserService userService,CurrentUserProvider provider) {
         this.userService = userService;
+        this.currentUserProvider = provider;
     }
 
     @PostMapping("/login")
@@ -55,11 +58,12 @@ public class AuthController {
         return ResponseEntity.badRequest().body(status.name());
     }
     @PostMapping("/income")
-    public  ResponseEntity<?> addIncome(@Valid @RequestBody AddIncomeRequest req){
-        logger.atInfo().log("Add Income request received for username={}", req.getUserid());
-        Status status = userService.addIncome(req.getUserid(), req.getAmount());
+    public  ResponseEntity<?> addIncome(@Valid @RequestBody AddMoneyRequest req){
+        logger.atInfo().log("Add Income request received. ");
+        Long userid = currentUserProvider.getCurrentUserId();
+        Status status = userService.addIncome(userid, req.getAmount());
         if(status == Status.SUCCESS){
-            logger.atInfo().log("Income added for username={}", req.getUserid());
+            logger.atInfo().log("Income added. ");
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.badRequest().body(status.name());

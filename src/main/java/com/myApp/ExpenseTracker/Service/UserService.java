@@ -18,7 +18,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final AuditService auditService;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-    public UserService(UserRepository userRepository,AuditService  audit){
+    public UserService(UserRepository userRepository,AuditService  audit ){
         this.userRepository = userRepository;
         this.auditService = audit;
     }
@@ -60,7 +60,8 @@ public class UserService {
         return Status.CREATED;
     }
     @Transactional
-    public Status addIncome(long userid , BigDecimal amnt){
+    public Status addIncome(Long userid, BigDecimal amnt){
+
         if(userRepository.increaseBalance(userid , amnt) > 0){
             logger.atInfo().log("Income added successful for user {}" , userid);
             auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());

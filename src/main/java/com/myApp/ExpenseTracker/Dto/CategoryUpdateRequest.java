@@ -4,10 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 
 @Getter
-public class LoginRequest {
+public class CategoryUpdateRequest {
     @NotBlank
-    private String username;
+    private String old_name;
     @NotBlank
-    private String password;
-
+    private String new_name;
 }

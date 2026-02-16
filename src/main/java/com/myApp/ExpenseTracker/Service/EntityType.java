@@ -6,7 +6,7 @@ public enum EntityType {
     CATEGORY,
     DEPOSIT,
     EXPENSE,
-    SAVING_ALLOCATION,
+    RESERVED,
     USER,
     WITHDRAWAL,
     EXPENSE_USE,

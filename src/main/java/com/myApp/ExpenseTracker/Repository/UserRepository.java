@@ -1,7 +1,9 @@
 package com.myApp.ExpenseTracker.Repository;
 
 import com.myApp.ExpenseTracker.Model.User;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,5 +34,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
           AND u.balance >= :amount
     """)
     int decreaseBalance(@Param("userId") Long userId, @Param("amount") BigDecimal amount);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u.balance FROM User u WHERE u.id = :id")
+    BigDecimal findBalanceById(@Param("id") Long id);
 }
 
