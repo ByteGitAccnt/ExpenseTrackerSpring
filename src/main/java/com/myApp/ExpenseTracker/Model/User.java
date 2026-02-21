@@ -2,15 +2,23 @@ package com.myApp.ExpenseTracker.Model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "USERS")
+@NoArgsConstructor
+@Table(name = "users")
 public class User {
-
+    public User(String name, String username, String password, String email) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.balance = BigDecimal.ZERO;
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "USER_ID")
@@ -54,5 +62,8 @@ public class User {
     }
     public void setBalance(BigDecimal balance){
         this.balance = balance;
+    }
+    public void withdraw(BigDecimal amount) {
+        this.balance = this.balance.subtract(amount);
     }
 }

@@ -1,7 +1,10 @@
 package com.myApp.ExpenseTracker.Service;
 
+import com.myApp.ExpenseTracker.Dto.CategoryResponseList;
 import com.myApp.ExpenseTracker.Model.Category;
+import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.CategoryRepository;
+import com.myApp.ExpenseTracker.Repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,38 +18,43 @@ import java.util.Optional;
 @Service
 public class CategoryService {
     private final AuditService auditService;
+    private final UserRepository userRepo;
     private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
     private final CategoryRepository catRepo;
-    public CategoryService(CategoryRepository catRepo,AuditService auditService ){
+    public CategoryService(CategoryRepository catRepo,AuditService auditService,UserRepository userRepo ){
         this.auditService = auditService;
         this.catRepo = catRepo;
+        this.userRepo = userRepo;
     }
     public Category addCategory(Long userid,String catname){
-        Category  cat = catRepo.save(new Category(catname,userid));
+        User user = userRepo.getReferenceById(userid);
+        Category  cat = catRepo.save(new Category(catname,user));
         logger.atInfo().log("Category created: {} for user: {}" ,catname , userid);
         auditService.logSuccess(userid,EntityType.CATEGORY,cat.getId(),"Category created: " + cat.getName());
         return cat;
     }
     @Transactional
     public Category findOrCreate(Long userId,String catName) {
-        if (catRepo.existsByNameAndUserId(catName.toLowerCase(), userId)) {
-            Optional<Category> opCat = catRepo.findByNameAndUserId(catName.toLowerCase(), userId);
+        if (catRepo.existsByNameAndUser_Id(catName.toLowerCase(), userId)) {
+            Optional<Category> opCat = catRepo.findByNameAndUser_Id(catName.toLowerCase(), userId);
             return opCat.orElse(null);
         }else{
             return addCategory(userId, catName);
         }
     }
+    //for update under transaction .save is optional ,
+    // we are under persistence context so hibernate will handle it by dirty read
     @Transactional
     public Status updateCategory( Long userId,String oldname , String newname){
         if(oldname.equalsIgnoreCase(newname)){
             logger.atWarn().log("Category updation failed , old name and new name are same for user {}" , userId);
             return Status.FAILED;
         }
-        if(catRepo.existsByNameAndUserId(newname.toLowerCase(), userId)){
+        if(catRepo.existsByNameAndUser_Id(newname.toLowerCase(), userId)){
             logger.atWarn().log("Category updation failed , new name already exists for user {}" , userId);
             return Status.ALREADY_EXISTS;
         }
-        Optional<Category> opCat = catRepo.findByNameAndUserId(oldname.toLowerCase(), userId);
+        Optional<Category> opCat = catRepo.findByNameAndUser_Id(oldname.toLowerCase(), userId);
         boolean[] success = new boolean[1];
         opCat.ifPresentOrElse(cat -> {
             cat.setName(newname);
@@ -57,7 +65,6 @@ public class CategoryService {
             success[0] = false;
         });
         if(success[0]){
-            catRepo.save(opCat.get()) ;
             logger.atInfo().log("Category Updated successful for user: {} from {} to {}",userId,oldname,newname);
             return Status.UPDATED;
         }
@@ -66,7 +73,7 @@ public class CategoryService {
     }
     @Transactional
     public Status deleteCategory(Long userid, String name){
-        Optional<Category> opCat = catRepo.findByNameAndUserId(name.toLowerCase() , userid);
+        Optional<Category> opCat = catRepo.findByNameAndUser_Id(name.toLowerCase() , userid);
         if(opCat.isPresent()){
          Category cat = opCat.get();
          catRepo.delete(cat);
@@ -78,11 +85,23 @@ public class CategoryService {
         logger.atWarn().log("Category {} deleted failed for user {}" , name , userid);
         return Status.FAILED;
     }
-    public List<Category> listCategory(Long userid){
-        List<Category> categoryList = catRepo.findByUserId(userid);
-        if (!categoryList.isEmpty())return categoryList;
+    @Transactional(readOnly = true)
+    public List<CategoryResponseList> listCategory(Long userid){
+        List<Category> categoryList = catRepo.findByUser_Id(userid);
+        List<CategoryResponseList> list = categoryList.stream()
+                .map(r -> new CategoryResponseList(
+                        r.getId(),
+                        r.getName(),
+                        r.getUser().getUsername()
+                ))
+                .toList();
+        if (!categoryList.isEmpty())return list;
         logger.atWarn().log("Category List don't exist for user {}" , userid);
         return new ArrayList<>();
     }
+    public Category getByNameForUser(String name, Long userId) {
+        return findOrCreate(userId,name.toLowerCase());
+    }
+
 }
 

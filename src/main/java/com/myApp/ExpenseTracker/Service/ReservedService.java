@@ -1,10 +1,14 @@
 package com.myApp.ExpenseTracker.Service;
 
-import com.myApp.ExpenseTracker.Dto.ReservedRequest;
-import com.myApp.ExpenseTracker.Dto.UpdateReserveRequest;
+import com.myApp.ExpenseTracker.Req.ReservedRequest;
+import com.myApp.ExpenseTracker.Dto.ReservedResponseList;
+import com.myApp.ExpenseTracker.Req.UpdateReserveRequest;
 import com.myApp.ExpenseTracker.Model.Reserved;
+import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.ReservedRepository;
 import com.myApp.ExpenseTracker.Repository.UserRepository;
+import com.myApp.ExpenseTracker.Utils.ResourceAlreadyExists;
+import com.myApp.ExpenseTracker.Utils.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,19 +33,20 @@ public class ReservedService {
     }
     @Transactional
     public Status addReserved( Long userid,ReservedRequest req){
-        Optional<Reserved> optionalReserved = reservedRepo.findByUserIdAndLabel(userid, req.getLabel().toLowerCase());
+        Optional<Reserved> optionalReserved = reservedRepo.findByUser_IdAndLabel(userid, req.getLabel().toLowerCase());
         if(optionalReserved.isPresent()){
             logger.atWarn().log("Duplicate Reserve fund creation attempt for user {}" , userid);
             return Status.ALREADY_EXISTS;
         }
-        Reserved reserved = reservedRepo.save(new Reserved(userid,req.getLabel(),req.getNote(),req.getAmount()));
+        User user = userRepo.getReferenceById(userid);
+        Reserved reserved = reservedRepo.save(new Reserved(user,req.getLabel().toLowerCase(),req.getNote(),req.getAmount()));
         logger.atInfo().log("Reserved created: {} for user {}" , reserved.getLabel(),userid);
         auditService.logSuccess(userid,EntityType.RESERVED, reserved.getId(), "Reserved amount created successful");
         return Status.CREATED;
     }
     @Transactional
     public Status deleteReserve( Long userid ,String label ){
-        Optional<Reserved> optionalReserved = reservedRepo.findByUserIdAndLabel(userid,label.toLowerCase());
+        Optional<Reserved> optionalReserved = reservedRepo.findByUser_IdAndLabel(userid,label.toLowerCase());
         if(optionalReserved.isPresent()){
             Reserved reserved = optionalReserved.get();
             reservedRepo.delete(reserved);
@@ -53,27 +58,46 @@ public class ReservedService {
         logger.atWarn().log("Reserved don't exist for user : {} with label: {}" , userid , label);
         return Status.NOT_FOUND;
     }
-    public List<Reserved> listReserved(Long userid){
-        List<Reserved> reservedList = reservedRepo.findByUserId(userid);
+    @Transactional(readOnly = true)
+    public List<ReservedResponseList> listReserved(Long userid){
+        List<Reserved> reservedList = reservedRepo.findByUser_Id(userid);
+        List<ReservedResponseList> list = reservedList.stream()
+                .map(r -> new ReservedResponseList(
+                        r.getId(),
+                        r.getLabel(),
+                        r.getAmount(),
+                        r.getUser().getUsername(),
+                        r.getNote()
+                ))
+                .toList();
         if(!reservedList.isEmpty()){
-            return reservedList;
+            return list;
         }
         logger.atWarn().log("Reserved List don't exist for user {}" , userid);
         return new ArrayList<>();
     }
+    //for update under transaction .save is optional ,
+    // we are under persistence context so hibernate will handle it by dirty read
     @Transactional
-    public Status updateReserveLabel(Long userid,UpdateReserveRequest req){
-        Optional<Reserved> reserved = reservedRepo.findByUserIdAndLabel(userid, req.getOld_label().toLowerCase());
-        Reserved res ;
-        if(reserved.isEmpty()){
-            logger.atWarn().log("Update failed , no reserve found for user {}" , userid);
-            auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
-            return Status.NOT_FOUND;
+    public Status updateReserveLabel(Long userid, UpdateReserveRequest req){
+        Reserved res = reservedRepo
+                .findByUser_IdAndLabel(userid, req.getOld_label().toLowerCase())
+                .orElseThrow(() -> {
+                    logger.atWarn().log("Update failed, no reserve found for user {}", userid);
+                    auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
+                    return new ResourceNotFoundException("Reserve not found");
+                });
+        if(req.getNew_label() != null) {
+            String newLabel = req.getNew_label().toLowerCase();
+            reservedRepo.findByUser_IdAndLabel(userid, newLabel)
+                    .ifPresent(r -> {
+                        throw new ResourceAlreadyExists("Reserve label already exists");
+                    });
+            res.setLabel(newLabel);
         }
-        res = reserved.get();
-        if(req.getNew_label() != null) res.setLabel(req.getNew_label());
-        if(req.getNote() != null) res.setNote(req.getNote());
-        reservedRepo.save(res);
+        if(req.getNote() != null) {
+            res.setNote(req.getNote());
+        }
         auditService.logUpdate(userid, EntityType.RESERVED, res.getId(), "Reserve updated", req.toString());
         return Status.UPDATED;
     }
@@ -84,14 +108,12 @@ public class ReservedService {
             auditService.logFailure(userid, EntityType.RESERVED, null, "Invalid amount");
             return Status.FAILED;
         }
-        Optional<Reserved> reservedOpt = reservedRepo.findByUserIdAndLabel(userid, label.toLowerCase());
-        if(reservedOpt.isEmpty() ){
-            logger.atWarn().log("Amount Update failed , no reserve found for user {}" , userid);
-            auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
-            return Status.NOT_FOUND;
-        }
-        Reserved res = reservedOpt.get();
-
+        Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase())
+                .orElseThrow(() ->{
+                    logger.atWarn().log("Amount Update failed , no reserve found for user {}" , userid);
+                    auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
+                    return new ResourceNotFoundException("Reserve not found");
+                        });
         BigDecimal balance = userRepo.findBalanceById(userid);
         if (balance == null) balance = BigDecimal.ZERO;
 
@@ -116,13 +138,12 @@ public class ReservedService {
             auditService.logFailure(userid, EntityType.RESERVED, null, "Invalid amount");
             return Status.FAILED;
         }
-        Optional<Reserved> reservedOpt = reservedRepo.findByUserIdAndLabel(userid, label.toLowerCase());
-        if(reservedOpt.isEmpty() ){
-            logger.atWarn().log("Amount deduction failed , no reserve found for user {}" , userid);
-            auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
-            return Status.NOT_FOUND;
-        }
-        Reserved res = reservedOpt.get();
+        Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase())
+                .orElseThrow(() ->{
+                    logger.atWarn().log("Amount withdraw failed , no reserve found for user {}" , userid);
+                    auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
+                    return new ResourceNotFoundException("Reserve not found");
+                });
         BigDecimal currentAmount = res.getAmount();
         if (currentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             logger.atWarn().log("Deduction failed, reserve empty for user {}", userid);
@@ -138,6 +159,8 @@ public class ReservedService {
         reservedRepo.save(res);
         auditService.logUpdate(userid, EntityType.RESERVED, res.getId(), "Amount",amnt.toString());
         return Status.UPDATED;
-        // need to deduct balance , but decide while expense adding form there or from here
+    }
+    public BigDecimal getTotalReserved(Long userId) {
+        return reservedRepo.sumReservedByUserId(userId);
     }
 }

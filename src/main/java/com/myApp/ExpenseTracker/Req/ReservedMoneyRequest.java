@@ -1,4 +1,4 @@
-package com.myApp.ExpenseTracker.Dto;
+package com.myApp.ExpenseTracker.Req;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

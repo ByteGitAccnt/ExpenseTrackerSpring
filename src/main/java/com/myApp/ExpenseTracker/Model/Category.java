@@ -8,8 +8,8 @@ import lombok.Getter;
 @Table(name = "CATEGORY")
 public class Category {
     protected Category(){}
-    public Category(String name , Long user_id){
-        this.userId = user_id;
+    public Category(String name , User user){
+        this.user = user;
         this.name = name.toLowerCase();
     }
     @Id
@@ -20,14 +20,11 @@ public class Category {
     @Column(name = "NAME")
     private String name;
 
-    @Column(name = "USER_ID")
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "USER_ID", nullable = false)
+    private User user;
 
     public void setName(String name) {
         this.name = name.toLowerCase();
-    }
-
-    public void setUser_id(Long user_id) {
-        this.userId = user_id;
     }
 }

@@ -1,7 +1,7 @@
 package com.myApp.ExpenseTracker.Service;
 
 
-import com.myApp.ExpenseTracker.Dto.RegisterRequest;
+import com.myApp.ExpenseTracker.Req.RegisterRequest;
 import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.UserRepository;
 import org.slf4j.Logger;
@@ -47,12 +47,12 @@ public class UserService {
             return Status.USERNAME_EXISTS;
         }
         String hashedPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt());// converts to hashed value
-        User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setEmail(dto.getEmail());
-        user.setName(dto.getName());
-        user.setPassword(hashedPassword);
-        user.setBalance(BigDecimal.valueOf(0.0));
+        User user = new User(
+                dto.getName(),
+                dto.getUsername(),
+                hashedPassword,
+                dto.getEmail()
+        );
         userRepository.save(user);
         logger.atInfo().log("Registration successful for username {}", dto.getUsername());
         Optional<User> userOpt = userRepository.findByUsername(dto.getUsername());

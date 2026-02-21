@@ -2,20 +2,21 @@ package com.myApp.ExpenseTracker.Model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Entity
 @Getter
+@NoArgsConstructor
 @Table(name = "RESERVED")
 public class Reserved {
 
-    protected Reserved(){}
-    public Reserved(Long user, String label , String note , BigDecimal amount){
+    public Reserved(User user, String label , String note , BigDecimal amount){
         this.amount = amount;
         this.label = label.toLowerCase();
         this.note = note;
-        this.userId = user;
+        this.user = user;
     }
 
     @Id
@@ -23,8 +24,9 @@ public class Reserved {
     @Column(name = "ID")
     private Long id;
 
-    @Column(name ="USER_ID" , nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name ="LABEL" , nullable = false)
     private String label;
