@@ -1,8 +1,8 @@
 package com.myApp.ExpenseTracker.Controller;
 
-import com.myApp.ExpenseTracker.Dto.AddMoneyRequest;
-import com.myApp.ExpenseTracker.Dto.LoginRequest;
-import com.myApp.ExpenseTracker.Dto.RegisterRequest;
+import com.myApp.ExpenseTracker.Req.AddMoneyRequest;
+import com.myApp.ExpenseTracker.Req.LoginRequest;
+import com.myApp.ExpenseTracker.Req.RegisterRequest;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.Status;
 import com.myApp.ExpenseTracker.Service.UserService;

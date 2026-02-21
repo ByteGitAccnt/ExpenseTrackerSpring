@@ -1,7 +1,10 @@
 package com.myApp.ExpenseTracker.Controller;
 
 import com.myApp.ExpenseTracker.Dto.*;
-import com.myApp.ExpenseTracker.Model.Reserved;
+import com.myApp.ExpenseTracker.Req.DeletionRequest;
+import com.myApp.ExpenseTracker.Req.ReservedMoneyRequest;
+import com.myApp.ExpenseTracker.Req.ReservedRequest;
+import com.myApp.ExpenseTracker.Req.UpdateReserveRequest;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.ReservedService;
 import com.myApp.ExpenseTracker.Service.Status;
@@ -51,7 +54,7 @@ public class ReserveFundController {
     @GetMapping
     public ResponseEntity<?> listReserve(){
         Long userid = currentUserProvider.getCurrentUserId();
-        List<Reserved> reservedList = reservedService.listReserved(userid);
+        List<ReservedResponseList> reservedList = reservedService.listReserved(userid);
         if(!reservedList.isEmpty()){
             return ResponseEntity.ok(reservedList);
         }

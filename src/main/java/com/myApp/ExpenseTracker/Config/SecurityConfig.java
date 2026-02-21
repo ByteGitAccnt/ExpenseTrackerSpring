@@ -20,7 +20,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login",
                                 "/api/auth/register" , "/api/auth/income",
-                        "/api/reserve" , "/api/reserve/deposit" , "/api/reserve/withdraw")
+                        "/api/reserve" , "/api/reserve/deposit" ,
+                                "/api/reserve/withdraw","/api/category",
+                                "/api/category/list" , "/api/expense" , "/api/expense/date" , "/api/expense/category","/api/expense/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated()

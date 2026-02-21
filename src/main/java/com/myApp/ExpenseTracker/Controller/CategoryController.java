@@ -1,8 +1,8 @@
 package com.myApp.ExpenseTracker.Controller;
 
-import com.myApp.ExpenseTracker.Dto.CategoryDeletionReq;
-import com.myApp.ExpenseTracker.Dto.CategoryUpdateRequest;
-import com.myApp.ExpenseTracker.Model.Category;
+import com.myApp.ExpenseTracker.Req.CategoryDeletionReq;
+import com.myApp.ExpenseTracker.Dto.CategoryResponseList;
+import com.myApp.ExpenseTracker.Req.CategoryUpdateRequest;
 import com.myApp.ExpenseTracker.Service.CategoryService;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.Status;
@@ -46,7 +46,7 @@ public class CategoryController {
     public ResponseEntity<?> listCategory(){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for listing category received for user {}" ,userid);
-        List<Category> categoryList = categoryService.listCategory(userid);
+        List<CategoryResponseList> categoryList = categoryService.listCategory(userid);
         if (!categoryList.isEmpty()) return ResponseEntity.ok(categoryList);
         logger.atWarn().log("Category list not found for user {}" , userid);
         return ResponseEntity.notFound().build();
