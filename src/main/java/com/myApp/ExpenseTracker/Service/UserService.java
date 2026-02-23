@@ -1,6 +1,9 @@
 package com.myApp.ExpenseTracker.Service;
 
 
+import com.myApp.ExpenseTracker.Dto.UserResponse;
+import com.myApp.ExpenseTracker.Exeception.ResourceAlreadyExists;
+import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
 import com.myApp.ExpenseTracker.Req.RegisterRequest;
 import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.UserRepository;
@@ -23,28 +26,41 @@ public class UserService {
         this.auditService = audit;
     }
     @Transactional(readOnly = true)
-    public boolean login(String username , String password){
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            logger.atInfo().log("Login attempt failed for username {}", username);
-            return false;
-        }
-        User user = userOpt.get();
+    public UserResponse login(String username, String password) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    logger.atWarn().log("Login failed for username {}", username);
+                    return new ResourceNotFoundException("Invalid credentials");
+                });
         boolean success = BCrypt.checkpw(password, user.getPassword());
-        logger.atInfo().log("Login attempt for username {} : {}",
-                username, success ? "SUCCESS" : "FAILED");
-        if(success){
-            auditService.logSuccess(user.getId(), EntityType.USER,user.getId(),Status.LOGGED.name());
-        }else{
-            auditService.logFailure(user.getId(), EntityType.USER,user.getId(),Status.LOGIN_FAILED.name());
+        if (!success) {
+            logger.atWarn().log("Login failed for username {}", username);
+            auditService.logFailure(
+                    user.getId(),
+                    EntityType.USER,
+                    user.getId(),
+                    Status.LOGIN_FAILED.name()
+            );
+            throw new IllegalArgumentException("Invalid credentials");
         }
-        return success;
+        logger.atInfo().log("Login successful for username {}", username);
+        auditService.logSuccess(
+                user.getId(),
+                EntityType.USER,
+                user.getId(),
+                Status.LOGGED.name()
+        );
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getBalance());
     }
     @Transactional
-    public Status register(RegisterRequest dto){
+    public UserResponse register(RegisterRequest dto){
         if(userRepository.existsByUsername(dto.getUsername())){
             logger.atWarn().log("User registration failed:username already exists! for username {}", dto.getUsername());
-            return Status.USERNAME_EXISTS;
+            throw new ResourceAlreadyExists("User already exists");
         }
         String hashedPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt());// converts to hashed value
         User user = new User(
@@ -53,21 +69,24 @@ public class UserService {
                 hashedPassword,
                 dto.getEmail()
         );
-        userRepository.save(user);
+        User saved = userRepository.save(user);
         logger.atInfo().log("Registration successful for username {}", dto.getUsername());
-        Optional<User> userOpt = userRepository.findByUsername(dto.getUsername());
-        userOpt.ifPresent(value -> auditService.logSuccess(value.getId(), EntityType.USER, value.getId(), Status.REGISTERED.name()));
-        return Status.CREATED;
+        auditService.logSuccess(saved.getId(), EntityType.USER, saved.getId(), Status.REGISTERED.name());
+        return new UserResponse(user.getId(), user.getUsername(), user.getEmail() , user.getBalance());
     }
     @Transactional
-    public Status addIncome(Long userid, BigDecimal amnt){
-
-        if(userRepository.increaseBalance(userid , amnt) > 0){
-            logger.atInfo().log("Income added successful for user {}" , userid);
-            auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());
-            return Status.SUCCESS;
-        }
-        logger.atWarn().log("Income adding failed for user {}" , userid);
-        return Status.FAILED;
+    public UserResponse addIncome(Long userid, BigDecimal amnt){
+        User user = userRepository.findByIdForUpdate(userid)
+                .orElseThrow(() -> {
+                    logger.atWarn().log("User not found for the userid {}" , userid);
+                    return new ResourceNotFoundException("User not found");
+                });
+        user.setBalance(user.getBalance().add(amnt));
+        auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());
+        return new UserResponse(user.getId(), user.getUsername(),user.getEmail() ,user.getBalance());
+    }
+    @Transactional
+    public Optional<User> getUserByid(Long userid){
+        return userRepository.findById(userid);
     }
 }

@@ -28,70 +28,44 @@ public class ReserveFundController {
         this.currentUserProvider = provider;
     }
     @PostMapping
-    public ResponseEntity<?> addReserve(@Valid @RequestBody ReservedRequest req){
+    public ResponseEntity<ReservedResponse> addReserve(@Valid @RequestBody ReservedRequest req){
         logger.atInfo().log("Request for creating reserve fund received for user with label {}" , req.getLabel());
         Long userid = currentUserProvider.getCurrentUserId();
-        Status success = reservedService.addReserved(userid, req);
-        if(success == Status.CREATED){
-            logger.atInfo().log("reserved fund created for label {} successful", req.getLabel());
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("reserve fund creation failed for label {}",req.getLabel());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("Reserve with this label already exists");
+        ReservedResponse response = reservedService.addReserved(userid, req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     @DeleteMapping
     public ResponseEntity<?> delete(@Valid @RequestBody DeletionRequest req){
         logger.atInfo().log("Request for deleting reserve fund received for label {}" ,req.getLabel());
         Long userid = currentUserProvider.getCurrentUserId();
-        Status deleted = reservedService.deleteReserve(userid, req.getLabel());
-        if(deleted == Status.DELETED){
-            logger.atInfo().log("Reserve Fund deletion successful for label {}" ,req.getLabel());
-            return ResponseEntity.noContent().build();
-        }
-        logger.atWarn().log("deletion failed , reserve fund not found! for label {}" , req.getLabel());
-        return ResponseEntity.notFound().build();
+        reservedService.deleteReserve(userid, req.getLabel());
+        return ResponseEntity.noContent().build();
     }
     @GetMapping
-    public ResponseEntity<?> listReserve(){
-        Long userid = currentUserProvider.getCurrentUserId();
-        List<ReservedResponseList> reservedList = reservedService.listReserved(userid);
-        if(!reservedList.isEmpty()){
-            return ResponseEntity.ok(reservedList);
-        }
-        logger.atWarn().log("Reserve List not found!");
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<List<ReservedResponse>> listReserved() {
+        Long userId = currentUserProvider.getCurrentUserId();
+        List<ReservedResponse> response = reservedService.listReserved(userId);
+        return ResponseEntity.ok(response);
     }
     @PutMapping
-    public ResponseEntity<?> updateReserve(@Valid @RequestBody UpdateReserveRequest req){
+    public ResponseEntity<ReservedResponse> updateReserve(@Valid @RequestBody UpdateReserveRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
-        Status updated = reservedService.updateReserveLabel(userid , req);
-        if(updated == Status.UPDATED){
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("Failed to update the reserve for user {}" , userid);
-        return ResponseEntity.notFound().build();
+        ReservedResponse response = reservedService.updateReserveLabel(userid , req);
+        return ResponseEntity.ok(response);
     }
     @PostMapping("/deposit")
-    public ResponseEntity<?> addMoney(@Valid @RequestBody ReservedMoneyRequest req){
+    public ResponseEntity<ReservedResponse> addMoney(@Valid @RequestBody ReservedMoneyRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request received for adding money for user {}" , userid);
-        Status success = reservedService.addAmount(userid, req.getLabel(), req.getAmount());
-        if (success == Status.UPDATED){
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("Failed to update amount for reserve for user {}" , userid);
-        return (success == Status.NOT_FOUND) ? ResponseEntity.notFound().build() : ResponseEntity.badRequest().build();
+        ReservedResponse response = reservedService.addAmount(userid, req.getLabel(), req.getAmount());
+        return ResponseEntity.ok(response);
     }
     @PostMapping("/withdraw")
     public ResponseEntity<?> deductMoney(@Valid @RequestBody ReservedMoneyRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request received for deduct money for user {}" , userid);
-        Status success = reservedService.withdrawAmount(userid, req.getLabel(), req.getAmount());
-        if (success == Status.UPDATED){
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("Failed to deduct amount for reserve for user {}" , userid);
-        return (success == Status.NOT_FOUND) ? ResponseEntity.notFound().build() : ResponseEntity.badRequest().build();
+        ReservedResponse response = reservedService.withdrawAmount(userid, req.getLabel(), req.getAmount());
+        return ResponseEntity.ok(response);
     }
 
 }
