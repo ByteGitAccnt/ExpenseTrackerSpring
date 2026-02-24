@@ -1,7 +1,9 @@
 package com.myApp.ExpenseTracker.Exeception;
 
-public class DuplicateCategoryNameException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class DuplicateCategoryNameException extends BusinessException  {
     public DuplicateCategoryNameException(String message) {
-        super(message);
+        super(message, HttpStatus.CONFLICT);
     }
 }

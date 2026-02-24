@@ -28,20 +28,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponse login(String username, String password) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Login failed for username {}", username);
-                    return new ResourceNotFoundException("Invalid credentials");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid credentials for username:" + username));
         boolean success = BCrypt.checkpw(password, user.getPassword());
         if (!success) {
-            logger.atWarn().log("Login failed for username {}", username);
-            auditService.logFailure(
-                    user.getId(),
-                    EntityType.USER,
-                    user.getId(),
-                    Status.LOGIN_FAILED.name()
-            );
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new IllegalArgumentException("Invalid credentials , username or password incorrect");
         }
         logger.atInfo().log("Login successful for username {}", username);
         auditService.logSuccess(
@@ -59,8 +49,7 @@ public class UserService {
     @Transactional
     public UserResponse register(RegisterRequest dto){
         if(userRepository.existsByUsername(dto.getUsername())){
-            logger.atWarn().log("User registration failed:username already exists! for username {}", dto.getUsername());
-            throw new ResourceAlreadyExists("User already exists");
+            throw new ResourceAlreadyExists("User already exists for user:" + dto.getUsername());
         }
         String hashedPassword = BCrypt.hashpw(dto.getPassword(), BCrypt.gensalt());// converts to hashed value
         User user = new User(
@@ -77,10 +66,7 @@ public class UserService {
     @Transactional
     public UserResponse addIncome(Long userid, BigDecimal amnt){
         User user = userRepository.findByIdForUpdate(userid)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("User not found for the userid {}" , userid);
-                    return new ResourceNotFoundException("User not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for user:" + userid));
         user.setBalance(user.getBalance().add(amnt));
         auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());
         return new UserResponse(user.getId(), user.getUsername(),user.getEmail() ,user.getBalance());

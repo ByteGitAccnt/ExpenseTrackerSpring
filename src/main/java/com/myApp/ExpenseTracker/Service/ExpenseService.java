@@ -1,7 +1,7 @@
 package com.myApp.ExpenseTracker.Service;
 
 import com.myApp.ExpenseTracker.Dto.ExpenseResponse;
-import com.myApp.ExpenseTracker.Dto.ReservedResponse;
+import com.myApp.ExpenseTracker.Exeception.RequiredException;
 import com.myApp.ExpenseTracker.Model.Category;
 import com.myApp.ExpenseTracker.Model.Expense;
 import com.myApp.ExpenseTracker.Model.User;
@@ -13,14 +13,12 @@ import com.myApp.ExpenseTracker.Req.DateReq;
 import com.myApp.ExpenseTracker.Req.ExpenseUpdateReq;
 import com.myApp.ExpenseTracker.Exeception.InsufficientBalanceException;
 import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
-import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -40,16 +38,12 @@ public class ExpenseService {
     }
     @Transactional
     public ExpenseResponse addExpense(Long userId, AddExpenseReq req) {
-        try {
-            if (Boolean.TRUE.equals(req.getIsReserved())
-                    && (req.getLabel() == null || req.getLabel().isBlank())) {
-                throw new BadRequestException("Label required when reserved is true");
-            }
-        } catch (BadRequestException e) {
-            throw new RuntimeException(e);
+        if (Boolean.TRUE.equals(req.getIsReserved())
+                && (req.getLabel() == null || req.getLabel().isBlank())) {
+            throw new RequiredException("Label required when reserved is true");
         }
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with userid:" + userId));
         BigDecimal amount = req.getAmount();
         if (req.getIsReserved()) {
             reservedService.withdrawAmount(
@@ -61,8 +55,7 @@ public class ExpenseService {
         } else {
             BigDecimal available = user.getBalance().subtract(reservedService.getTotalReserved(userId));
             if (available.compareTo(amount) < 0) {
-                logger.atWarn().log("Expense creation failed , Insufficient balance for user {}" , userId);
-                throw  new InsufficientBalanceException("Insufficient balance!");
+                throw  new InsufficientBalanceException("Insufficient balance! for user {}"+ userId);
             }
         }
         user.withdraw(amount);
@@ -75,7 +68,6 @@ public class ExpenseService {
                 user
         );
         Expense exp = expenseRepo.save(expense);
-        logger.atInfo().log("Expense created for user{}" , userId);
         auditService.logSuccess(userId,EntityType.EXPENSE, exp.getId(), "Expense created");
         return new ExpenseResponse(
                 expense.getId(),
@@ -131,17 +123,9 @@ public class ExpenseService {
     @Transactional
     public void deleteExpense(Long userid, Long expid) {
         Expense exp = expenseRepo.findByIdAndUser_Id(expid, userid)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Deletion failed expense not found for user {}"  , userid);
-                    auditService.logFailure(userid,EntityType.EXPENSE,expid,"Not found");
-                    return new ResourceNotFoundException("Expense not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user:" + userid ));
         User user = userRepo.findByIdForUpdate(userid)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Deletion failed user not found for user {}"  , userid);
-                    auditService.logFailure(userid,EntityType.EXPENSE,expid,"Not found");
-                    return new ResourceNotFoundException("User not found!");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         user.setBalance(user.getBalance().add(exp.getAmount()));
         expenseRepo.delete(exp);
@@ -153,11 +137,7 @@ public class ExpenseService {
     public ExpenseResponse updateExpense(Long userid , ExpenseUpdateReq req){
         Expense expense = expenseRepo
                 .findByIdAndUser_Id(req.getExp_id(), userid)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Updation failed ,Expense not found with the expid {} for user {}", req.getExp_id(), userid);
-                    auditService.logFailure(userid,EntityType.EXPENSE,req.getExp_id(),"Not found");
-                    return new ResourceNotFoundException("Expense not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user:" + userid));
         if (req.getExp_date() != null) {
             expense.setExpenseDate(req.getExp_date());
         }

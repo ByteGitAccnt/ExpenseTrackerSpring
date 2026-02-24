@@ -6,7 +6,6 @@ import com.myApp.ExpenseTracker.Dto.CategoryResponseList;
 import com.myApp.ExpenseTracker.Req.CategoryUpdateRequest;
 import com.myApp.ExpenseTracker.Service.CategoryService;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
-import com.myApp.ExpenseTracker.Service.Status;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

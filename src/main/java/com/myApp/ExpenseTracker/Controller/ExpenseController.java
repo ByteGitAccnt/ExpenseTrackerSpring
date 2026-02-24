@@ -4,7 +4,6 @@ import com.myApp.ExpenseTracker.Dto.ExpenseResponse;
 import com.myApp.ExpenseTracker.Req.*;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.ExpenseService;
-import com.myApp.ExpenseTracker.Service.Status;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

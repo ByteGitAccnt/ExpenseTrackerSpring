@@ -1,7 +1,9 @@
 package com.myApp.ExpenseTracker.Exeception;
 
-public class ResourceAlreadyExists extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class ResourceAlreadyExists extends BusinessException {
     public ResourceAlreadyExists(String message) {
-        super(message);
+        super(message , HttpStatus.CONFLICT);
     }
 }

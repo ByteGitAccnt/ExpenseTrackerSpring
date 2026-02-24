@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -37,14 +36,10 @@ public class ReservedService {
     @Transactional
     public ReservedResponse addReserved( Long userid,ReservedRequest req){
         User user = userService.getUserByid(userid)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("User doesn't exist for the userid : {}" , userid);
-                    return new ResourceNotFoundException("user not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("User doesn't exist for the userid :" + userid));
         reservedRepo.findByUser_IdAndLabel(userid, req.getLabel().toLowerCase())
                 .ifPresent( e -> {
-                    logger.atWarn().log("The reserved fund already exist for the user ");
-                    throw new ResourceAlreadyExists("Reserve fund already exist!");
+                    throw new ResourceAlreadyExists("The reserved fund already exist for the user ");
                 });
         Reserved reserved = reservedRepo.save(new Reserved(user,req.getLabel(),req.getNote(),req.getAmount()));
         logger.atInfo().log("Reserved created: {} for user {}" , reserved.getLabel(),userid);
@@ -54,11 +49,7 @@ public class ReservedService {
     @Transactional
     public void deleteReserve( Long userid ,String label ){
         Reserved reserved = reservedRepo.findByUser_IdAndLabel(userid,label.toLowerCase())
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Reserved don't exist for user : {} with label: {}" , userid , label);
-                    auditService.logFailure(userid,EntityType.RESERVED,null ,"Reserved don't exist ");
-                    return new ResourceNotFoundException("Reserve fund not found.");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Reserved don't exist for user : " + userid + " with label:" + label));
         reservedRepo.delete(reserved);
         logger.atInfo().log("Reserved amount deleted for user : {}" , userid);
         auditService.logSuccess(userid,EntityType.RESERVED,reserved.getId(),"Reserved amount deleted successful");
@@ -81,11 +72,7 @@ public class ReservedService {
     public ReservedResponse updateReserveLabel(Long userid, UpdateReserveRequest req){
         Reserved res = reservedRepo
                 .findByUser_IdAndLabel(userid, req.getOld_label().toLowerCase())
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Update failed, no reserve found for user {}", userid);
-                    auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
-                    return new ResourceNotFoundException("Reserve not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Reserve not found for user :" + userid));
         if(req.getNew_label() != null) {
             String newLabel = req.getNew_label().toLowerCase();
             reservedRepo.findByUser_IdAndLabel(userid, newLabel)
@@ -103,11 +90,7 @@ public class ReservedService {
     @Transactional
     public ReservedResponse addAmount( Long userid,String label , BigDecimal amnt){
         Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase())
-                .orElseThrow(() ->{
-                    logger.atWarn().log("Amount Update failed , no reserve found for user {}" , userid);
-                    auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
-                    return new ResourceNotFoundException("Reserve not found");
-                        });
+                .orElseThrow(() -> new ResourceNotFoundException("no reserve found for user :" + userid));
         BigDecimal balance = userRepo.findBalanceById(userid);
         if (balance == null) balance = BigDecimal.ZERO;
 
@@ -116,9 +99,7 @@ public class ReservedService {
         BigDecimal available = balance.subtract(totalReserved);
 
         if (available.compareTo(amnt) < 0) {
-            logger.atWarn().log("Amount Update failed , insufficient available balance for user {}", userid);
-            auditService.logFailure(userid, EntityType.RESERVED, res.getId(), "Insufficient balance");
-            throw new InsufficientBalanceException("Insufficient balance in reserved fund");
+            throw new InsufficientBalanceException("insufficient available balance for user: " +  userid);
         }
         res.setAmount(res.getAmount().add(amnt).setScale(2, RoundingMode.HALF_UP));
 
@@ -128,21 +109,13 @@ public class ReservedService {
     @Transactional
     public ReservedResponse withdrawAmount(Long userid,String label , BigDecimal amnt){
         Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase())
-                .orElseThrow(() ->{
-                    logger.atWarn().log("Amount withdraw failed , no reserve found for user {}" , userid);
-                    auditService.logFailure(userid, EntityType.RESERVED, null, "Reserved fund not found");
-                    return new ResourceNotFoundException("Reserve not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Reserve not found for user:" + userid));
         BigDecimal currentAmount = res.getAmount();
         if (currentAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            logger.atWarn().log("Deduction failed, reserve empty for user {}", userid);
-            auditService.logFailure(userid, EntityType.RESERVED, res.getId(), "Reserve is empty");
-            throw new InsufficientBalanceException("Insufficient balance for reserved fund");
+            throw new InsufficientBalanceException("Insufficient balance for reserved fund for user :"+userid);
         }
         if (currentAmount.compareTo(amnt) < 0) {
-            logger.atWarn().log("Deduction failed, insufficient reserved amount for user {}", userid);
-            auditService.logFailure(userid, EntityType.RESERVED, res.getId(), "Insufficient reserved amount");
-            throw new InsufficientBalanceException("Insufficient balance for reserved fund");
+            throw new InsufficientBalanceException("Insufficient balance for reserved fund for user :"+userid);
         }
         res.setAmount(res.getAmount().subtract(amnt).setScale(2, RoundingMode.HALF_UP));
 

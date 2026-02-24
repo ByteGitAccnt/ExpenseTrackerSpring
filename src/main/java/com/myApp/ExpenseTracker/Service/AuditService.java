@@ -13,7 +13,6 @@ public class AuditService {
     public AuditService(AuditRepository auditRepo){
         this.auditRepo = auditRepo;
     }
-
     @Async("auditExecutor")
     @Transactional(propagation = REQUIRES_NEW)
     public void logSuccess(Long userId, EntityType entityType, Long entityId, String actionDetail) {
