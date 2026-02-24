@@ -1,11 +1,11 @@
 package com.myApp.ExpenseTracker.Controller;
 
+import com.myApp.ExpenseTracker.Dto.CategoryResponse;
 import com.myApp.ExpenseTracker.Req.CategoryDeletionReq;
 import com.myApp.ExpenseTracker.Dto.CategoryResponseList;
 import com.myApp.ExpenseTracker.Req.CategoryUpdateRequest;
 import com.myApp.ExpenseTracker.Service.CategoryService;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
-import com.myApp.ExpenseTracker.Service.Status;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,19 +28,15 @@ public class CategoryController {
     public ResponseEntity<?> updateCategory(@Valid @RequestBody CategoryUpdateRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for category: {}  update received for user {}" ,req.getOld_name(), userid);
-        Status updated = categoryService.updateCategory(userid,req.getOld_name(), req.getNew_name());
-        if (updated == Status.UPDATED) return ResponseEntity.ok().build();
-        logger.atWarn().log("Updation failed for user {} category {} ", userid, req.getOld_name());
-        return (updated == Status.ALREADY_EXISTS) ? ResponseEntity.badRequest().build(): ResponseEntity.notFound().build();
+        CategoryResponse response = categoryService.updateCategory(userid,req.getOld_name(), req.getNew_name());
+        return ResponseEntity.ok(response);
     }
     @DeleteMapping
     public ResponseEntity<?> deleteCategory(@Valid @RequestBody CategoryDeletionReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for category: {}  delete received for user {}" ,req.getName(), userid);
-        Status deleted = categoryService.deleteCategory(userid, req.getName());
-        if (deleted == Status.SUCCESS) return ResponseEntity.ok().build();
-        logger.atWarn().log("Deletion failed for user {} category {} ", userid, req.getName());
-        return ResponseEntity.notFound().build();
+        categoryService.deleteCategory(userid, req.getName());
+        return ResponseEntity.ok().build();
     }
     @GetMapping("/list")
     public ResponseEntity<?> listCategory(){

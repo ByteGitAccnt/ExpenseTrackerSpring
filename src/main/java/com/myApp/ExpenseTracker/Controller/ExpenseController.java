@@ -1,10 +1,9 @@
 package com.myApp.ExpenseTracker.Controller;
 
-import com.myApp.ExpenseTracker.Dto.ExpenseResponseList;
+import com.myApp.ExpenseTracker.Dto.ExpenseResponse;
 import com.myApp.ExpenseTracker.Req.*;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.ExpenseService;
-import com.myApp.ExpenseTracker.Service.Status;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,70 +23,46 @@ public class ExpenseController {
         this.currentUserProvider = provider;
     }
     @PostMapping
-    public ResponseEntity<?> addExpense(@Valid @RequestBody AddExpenseReq req){
+    public ResponseEntity<ExpenseResponse> addExpense(@Valid @RequestBody AddExpenseReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for creating expense received for user {}" ,userid);
-        Status created = expenseService.addExpense(userid,req);
-        if(created == Status.CREATED){
-            logger.atInfo().log("Expense created for user {}"  , userid);
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("Expense creation failed for user {}" , userid);
-        return ResponseEntity.badRequest().build();
+        ExpenseResponse response = expenseService.addExpense(userid,req);
+        logger.atInfo().log("Expense created for user {}"  , userid);
+        return ResponseEntity.ok(response);
     }
     @GetMapping
-    public ResponseEntity<?> list(){
+    public ResponseEntity<List<ExpenseResponse>> list(){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense listing received for user {}" , userid);
-        List<ExpenseResponseList> list = expenseService.listExpense(userid);
-        if (list.isEmpty()) {
-            logger.atWarn().log("expense list not found for user {}" , userid);
-            return ResponseEntity.notFound().build();
-        }
+        List<ExpenseResponse> list = expenseService.listExpense(userid);
         return ResponseEntity.ok(list);
     }
     @GetMapping("/date")
-    public ResponseEntity<?> list(@Valid @RequestBody DateReq req){
+    public ResponseEntity<List<ExpenseResponse>> list(@Valid @RequestBody DateReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense listing by date received for user {}" , userid);
-        List<ExpenseResponseList> list = expenseService.listExpenseByDate(userid ,req );
-        if (list.isEmpty()) {
-            logger.atWarn().log("expense  expense listing by date not found for user {}" , userid);
-            return ResponseEntity.notFound().build();
-        }
+        List<ExpenseResponse> list = expenseService.listExpenseByDate(userid ,req );
         return ResponseEntity.ok(list);
     }
     @GetMapping("/category")
-    public ResponseEntity<?> list(@Valid @RequestBody DateAndCatReq req){
+    public ResponseEntity<List<ExpenseResponse>> list(@Valid @RequestBody DateAndCatReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense listing by date and category received for user {}" , userid);
-        List<ExpenseResponseList> list = expenseService.listExpenseByCategoryAndDate(userid ,req );
-        if (list.isEmpty()) {
-            logger.atWarn().log("expense  expense listing by date and category not found for user {}" , userid);
-            return ResponseEntity.notFound().build();
-        }
+        List<ExpenseResponse> list = expenseService.listExpenseByCategoryAndDate(userid ,req );
         return ResponseEntity.ok(list);
     }
     @DeleteMapping("/{exp_id}")
     public ResponseEntity<?> deleteExpense(@PathVariable Long exp_id){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense deletion received for user {}" , userid);
-        Status deleted = expenseService.deleteExpense(userid,exp_id);
-        if (deleted == Status.DELETED){
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("Expense deletion failed for user {}" , userid);
-        return ResponseEntity.notFound().build();
+        expenseService.deleteExpense(userid,exp_id);
+        return ResponseEntity.noContent().build();
     }
     @PatchMapping
-    public ResponseEntity<?> updateExpense(@Valid @RequestBody ExpenseUpdateReq req){
+    public ResponseEntity<ExpenseResponse> updateExpense(@Valid @RequestBody ExpenseUpdateReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense updation received for user {}", userid);
-        Status updated = expenseService.updateExpense(userid,req);
-        if(updated == Status.UPDATED){
-            return ResponseEntity.ok().build();
-        }
-        logger.atWarn().log("Expense updation failed for user {}" , userid);
-        return ResponseEntity.notFound().build();
+        ExpenseResponse response = expenseService.updateExpense(userid,req);
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,6 +1,7 @@
 package com.myApp.ExpenseTracker.Service;
 
-import com.myApp.ExpenseTracker.Dto.ExpenseResponseList;
+import com.myApp.ExpenseTracker.Dto.ExpenseResponse;
+import com.myApp.ExpenseTracker.Exeception.RequiredException;
 import com.myApp.ExpenseTracker.Model.Category;
 import com.myApp.ExpenseTracker.Model.Expense;
 import com.myApp.ExpenseTracker.Model.User;
@@ -10,17 +11,15 @@ import com.myApp.ExpenseTracker.Repository.UserRepository;
 import com.myApp.ExpenseTracker.Req.DateAndCatReq;
 import com.myApp.ExpenseTracker.Req.DateReq;
 import com.myApp.ExpenseTracker.Req.ExpenseUpdateReq;
-import com.myApp.ExpenseTracker.Utils.ResourceNotFoundException;
-import org.apache.coyote.BadRequestException;
+import com.myApp.ExpenseTracker.Exeception.InsufficientBalanceException;
+import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ExpenseService {
@@ -38,33 +37,25 @@ public class ExpenseService {
         this.categoryService = categoryService;
     }
     @Transactional
-    public Status addExpense(Long userId, AddExpenseReq req) {
-        try {
-            if (Boolean.TRUE.equals(req.getIsReserved())
-                    && (req.getLabel() == null || req.getLabel().isBlank())) {
-                throw new BadRequestException("Label required when reserved is true");
-            }
-        } catch (BadRequestException e) {
-            throw new RuntimeException(e);
+    public ExpenseResponse addExpense(Long userId, AddExpenseReq req) {
+        if (Boolean.TRUE.equals(req.getIsReserved())
+                && (req.getLabel() == null || req.getLabel().isBlank())) {
+            throw new RequiredException("Label required when reserved is true");
         }
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with userid:" + userId));
         BigDecimal amount = req.getAmount();
         if (req.getIsReserved()) {
-            Status reserveStatus = reservedService.withdrawAmount(
+            reservedService.withdrawAmount(
                     userId,
                     req.getLabel(),
                     amount
             );
-            if (reserveStatus == Status.FAILED) {
-                return Status.FAILED;
-            }
             logger.atInfo().log("Amount:{} deducted from reserve for user {}" , req.getAmount(),userId);
         } else {
             BigDecimal available = user.getBalance().subtract(reservedService.getTotalReserved(userId));
             if (available.compareTo(amount) < 0) {
-                logger.atWarn().log("Expense creation failed , Insufficient balance for user {}" , userId);
-                return Status.FAILED;
+                throw  new InsufficientBalanceException("Insufficient balance! for user {}"+ userId);
             }
         }
         user.withdraw(amount);
@@ -77,52 +68,50 @@ public class ExpenseService {
                 user
         );
         Expense exp = expenseRepo.save(expense);
-        logger.atInfo().log("Expense created for user{}" , userId);
         auditService.logSuccess(userId,EntityType.EXPENSE, exp.getId(), "Expense created");
-        return Status.CREATED;
+        return new ExpenseResponse(
+                expense.getId(),
+                expense.getAmount(),
+                expense.getExpenseDate(),
+                expense.getNote(),
+                expense.getCategory().getName());
     }
     @Transactional(readOnly = true)
-    public List<ExpenseResponseList> listExpense(Long userid){
+    public List<ExpenseResponse> listExpense(Long userid){
         List<Expense> expenseList = expenseRepo.findByUser_Id(userid);
-        List<ExpenseResponseList> list = expenseList.stream()
-                .map(r -> new ExpenseResponseList(
-                        r.getId(),
-                        r.getAmount(),
-                        r.getExpenseDate(),
-                        r.getNote(),
-                        r.getCategory().getName()
+        return expenseList.stream()
+                .map(e -> new ExpenseResponse(
+                        e.getId(),
+                        e.getAmount(),
+                        e.getExpenseDate(),
+                        e.getNote(),
+                        e.getCategory().getName()
                 ))
                 .toList();
-        if (!expenseList.isEmpty()) return  list;
-        logger.atWarn().log("Expense List don't exist for user {}" , userid);
-        return new ArrayList<>();
     }
     @Transactional(readOnly = true)
-    public List<ExpenseResponseList> listExpenseByDate(Long userid , DateReq req){
+    public List<ExpenseResponse> listExpenseByDate(Long userid , DateReq req){
         List<Expense> expenseList = expenseRepo.findByUser_IdAndExpenseDateBetween(userid , req.getStartDate(),req.getEndDate());
-        List<ExpenseResponseList> list = expenseList.stream()
-                .map(r -> new ExpenseResponseList(
-                        r.getId(),
-                        r.getAmount(),
-                        r.getExpenseDate(),
-                        r.getNote(),
-                        r.getCategory().getName()
+        return expenseList.stream()
+                .map(e -> new ExpenseResponse(
+                        e.getId(),
+                        e.getAmount(),
+                        e.getExpenseDate(),
+                        e.getNote(),
+                        e.getCategory().getName()
                 ))
                 .toList();
-        if (!expenseList.isEmpty()) return  list;
-        logger.atWarn().log("Expense List don't exist for user {} with current date" , userid);
-        return new ArrayList<>();
     }
     @Transactional(readOnly = true)
-    public List<ExpenseResponseList> listExpenseByCategoryAndDate(Long userid , DateAndCatReq req){
+    public List<ExpenseResponse> listExpenseByCategoryAndDate(Long userid , DateAndCatReq req){
         List<Expense> expenseList = expenseRepo.findByUser_IdAndCategory_IdAndExpenseDateBetween(
                 userid ,
                 req.getCatid(),
                 req.getStartDate(),
                 req.getEndDate()
         );
-        List<ExpenseResponseList> list = expenseList.stream()
-                .map(r -> new ExpenseResponseList(
+        return expenseList.stream()
+                .map(r -> new ExpenseResponse(
                         r.getId(),
                         r.getAmount(),
                         r.getExpenseDate(),
@@ -130,47 +119,45 @@ public class ExpenseService {
                         r.getCategory().getName()
                 ))
                 .toList();
-        if (!expenseList.isEmpty()) return  list;
-        logger.atWarn().log("Expense List don't exist for user {} with current category and date" , userid);
-        return new ArrayList<>();
     }
     @Transactional
-    public Status deleteExpense(Long userid, Long expid) {
+    public void deleteExpense(Long userid, Long expid) {
         Expense exp = expenseRepo.findByIdAndUser_Id(expid, userid)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-        User user = userRepo.findById(userid)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user:" + userid ));
+        User user = userRepo.findByIdForUpdate(userid)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
         user.setBalance(user.getBalance().add(exp.getAmount()));
         expenseRepo.delete(exp);
         auditService.logSuccess(userid, EntityType.EXPENSE, expid, "Expense deleted and balance restored");
-        return Status.DELETED;
     }
     //for update under transaction .save is optional ,
     // we are under persistence context so hibernate will handle it by dirty read
     @Transactional
-    public Status updateExpense(Long userid , ExpenseUpdateReq req){
+    public ExpenseResponse updateExpense(Long userid , ExpenseUpdateReq req){
         Expense expense = expenseRepo
                 .findByIdAndUser_Id(req.getExp_id(), userid)
-                .orElseThrow(() -> {
-                    logger.atWarn().log("Updation failed ,Expense not found with the expid {} for user {}", req.getExp_id(), userid);
-                    auditService.logFailure(userid,EntityType.EXPENSE,req.getExp_id(),"Not found");
-                    return new ResourceNotFoundException("Expense not found");
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user:" + userid));
         if (req.getExp_date() != null) {
             expense.setExpenseDate(req.getExp_date());
         }
         if (req.getNote() != null && !req.getNote().isBlank()) {
             expense.setNote(req.getNote());
         }
-        Category category = null;
+        Category category ;
         if (req.getCategory_name() != null && !req.getCategory_name().isBlank()) {
             category = categoryService.getByNameForUser(req.getCategory_name(),userid);
             expense.setCategory(category);
         }
         auditService.logUpdate(userid,EntityType.EXPENSE,req.getExp_id(),"Category,Note,Date",req.toString());
         logger.atInfo().log("Expense updated successfully for user {}" , userid);
-        return Status.UPDATED;
+        return new ExpenseResponse(
+                expense.getId(),
+                expense.getAmount(),
+                expense.getExpenseDate(),
+                expense.getNote(),
+                expense.getCategory().getName()
+        );
     }
 }
 

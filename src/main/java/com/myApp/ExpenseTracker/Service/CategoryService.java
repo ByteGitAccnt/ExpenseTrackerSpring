@@ -1,6 +1,10 @@
 package com.myApp.ExpenseTracker.Service;
 
+import com.myApp.ExpenseTracker.Dto.CategoryResponse;
 import com.myApp.ExpenseTracker.Dto.CategoryResponseList;
+import com.myApp.ExpenseTracker.Exeception.DuplicateCategoryNameException;
+import com.myApp.ExpenseTracker.Exeception.ResourceAlreadyExists;
+import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
 import com.myApp.ExpenseTracker.Model.Category;
 import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.CategoryRepository;
@@ -29,7 +33,6 @@ public class CategoryService {
     public Category addCategory(Long userid,String catname){
         User user = userRepo.getReferenceById(userid);
         Category  cat = catRepo.save(new Category(catname,user));
-        logger.atInfo().log("Category created: {} for user: {}" ,catname , userid);
         auditService.logSuccess(userid,EntityType.CATEGORY,cat.getId(),"Category created: " + cat.getName());
         return cat;
     }
@@ -45,45 +48,27 @@ public class CategoryService {
     //for update under transaction .save is optional ,
     // we are under persistence context so hibernate will handle it by dirty read
     @Transactional
-    public Status updateCategory( Long userId,String oldname , String newname){
+    public CategoryResponse updateCategory( Long userId,String oldname , String newname){
         if(oldname.equalsIgnoreCase(newname)){
-            logger.atWarn().log("Category updation failed , old name and new name are same for user {}" , userId);
-            return Status.FAILED;
+            throw new DuplicateCategoryNameException("old name and new name are same! for user : " + userId );
         }
         if(catRepo.existsByNameAndUser_Id(newname.toLowerCase(), userId)){
-            logger.atWarn().log("Category updation failed , new name already exists for user {}" , userId);
-            return Status.ALREADY_EXISTS;
+            throw new ResourceAlreadyExists("category name already exists! for user:" + userId);
         }
-        Optional<Category> opCat = catRepo.findByNameAndUser_Id(oldname.toLowerCase(), userId);
-        boolean[] success = new boolean[1];
-        opCat.ifPresentOrElse(cat -> {
-            cat.setName(newname);
-            auditService.logUpdate(userId,EntityType.CATEGORY,cat.getId(),"NAME" , newname );
-            success[0] = true;
-        }, () -> {
-            auditService.logFailure(userId,EntityType.CATEGORY,null,"Entity not found");
-            success[0] = false;
-        });
-        if(success[0]){
-            logger.atInfo().log("Category Updated successful for user: {} from {} to {}",userId,oldname,newname);
-            return Status.UPDATED;
-        }
-        logger.atWarn().log("Category updation failed , for user {}, Not found category {}" , userId,oldname);
-        return Status.FAILED;
+        Category cat = catRepo.findByNameAndUser_Id(oldname.toLowerCase(), userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found for the name : " + oldname + " for the user : " + userId));
+        cat.setName(newname);
+        auditService.logUpdate(userId,EntityType.CATEGORY,cat.getId(),"NAME" , newname );
+        logger.atInfo().log("Category Updated successful for user: {} from {} to {}",userId,oldname,newname);
+       return new CategoryResponse(cat.getId() , cat.getName());
     }
     @Transactional
-    public Status deleteCategory(Long userid, String name){
-        Optional<Category> opCat = catRepo.findByNameAndUser_Id(name.toLowerCase() , userid);
-        if(opCat.isPresent()){
-         Category cat = opCat.get();
+    public void deleteCategory(Long userid, String name){
+         Category cat = catRepo.findByNameAndUser_Id(name.toLowerCase() , userid)
+                 .orElseThrow(() -> new ResourceNotFoundException("Category not found for the name : " + name + " for the user : " + userid));
          catRepo.delete(cat);
          auditService.logSuccess(userid,EntityType.CATEGORY, cat.getId(), "Category: " + cat.getName() + "deleted successfully");
          logger.atInfo().log("Category {} deleted successful for user {}" , name , userid);
-         return Status.SUCCESS;
-        }
-        auditService.logFailure(userid,EntityType.CATEGORY,null, "Category not found");
-        logger.atWarn().log("Category {} deleted failed for user {}" , name , userid);
-        return Status.FAILED;
     }
     @Transactional(readOnly = true)
     public List<CategoryResponseList> listCategory(Long userid){
@@ -96,7 +81,7 @@ public class CategoryService {
                 ))
                 .toList();
         if (!categoryList.isEmpty())return list;
-        logger.atWarn().log("Category List don't exist for user {}" , userid);
+        logger.atInfo().log("Category List don't exist for user {}" , userid);
         return new ArrayList<>();
     }
     public Category getByNameForUser(String name, Long userId) {

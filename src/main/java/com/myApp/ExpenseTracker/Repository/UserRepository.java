@@ -4,7 +4,6 @@ import com.myApp.ExpenseTracker.Model.User;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,24 +17,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     Optional<User> findByUsername(String username);
 
-    @Modifying
-    @Query("""
-        UPDATE User u
-        SET u.balance = u.balance + :amount
-        WHERE u.id = :userId
-    """)
-    int increaseBalance(@Param("userId") Long userId, @Param("amount") BigDecimal amount);
-
-    @Modifying
-    @Query("""
-        UPDATE User u
-        SET u.balance = u.balance - :amount
-        WHERE u.id = :userId
-          AND u.balance >= :amount
-    """)
-    int decreaseBalance(@Param("userId") Long userId, @Param("amount") BigDecimal amount);
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u.balance FROM User u WHERE u.id = :id")
     BigDecimal findBalanceById(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.id = :id")
+    Optional<User> findByIdForUpdate(Long id);
 }
 
