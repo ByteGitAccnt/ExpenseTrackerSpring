@@ -87,7 +87,6 @@ public class AuthController {
     public ResponseEntity<RefreshResponse> refresh(@Valid @RequestBody RefreshReq req){
         logger.atInfo().log("refresh token request received");
         RefreshToken refreshToken = refreshTokenService.validateRefreshToken(req.getRefreshToken());
-
         String token = jwtService.refresh(refreshToken.getUser());
         return ResponseEntity.ok(new RefreshResponse(token,refreshToken.getToken()));
     }
