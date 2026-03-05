@@ -46,6 +46,12 @@ public class RefreshTokenService  {
             refreshTokenRepository.delete(refreshToken);
             throw new InvalidRefreshTokenException("Refresh token expired");
         }
-        return refreshToken;
+        User user = refreshToken.getUser();
+
+        return createRefreshToken(user);
+    }
+    @Transactional
+    public void deleteByUserId(Long userId) {
+        refreshTokenRepository.deleteByUserId(userId);
     }
 }

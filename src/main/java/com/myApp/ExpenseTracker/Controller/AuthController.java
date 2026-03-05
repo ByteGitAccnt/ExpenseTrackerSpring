@@ -98,4 +98,10 @@ public class AuthController {
         logger.atInfo().log("Income added. ");
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        Long userId = currentUserProvider.getCurrentUserId();
+        refreshTokenService.deleteByUserId(userId);
+        return ResponseEntity.ok("Logged out successfully");
+    }
 }
