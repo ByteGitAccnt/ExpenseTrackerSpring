@@ -20,11 +20,10 @@ public class JwtService {
             Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
 
     public String generateToken(Authentication authentication) {
-        // do i handler refresh token here ?
         return Jwts.builder()
                 .subject(authentication.getName())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 86400000))// 60,000 = 1min, 86400000 = 1day
+                .expiration(new Date(System.currentTimeMillis() + 60000))// 60,000 = 1min, 86400000 = 1day 600,000 10min
                 .signWith(key)
                 .compact();
     }
@@ -32,7 +31,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(user.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 86400000))// 60,000 = 1min, 86400000 = 1day
+                .expiration(new Date(System.currentTimeMillis() + 60000))// 60,000 = 1min, 86400000 = 1day
                 .signWith(key)
                 .compact();
     }

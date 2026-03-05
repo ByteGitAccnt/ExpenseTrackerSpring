@@ -87,6 +87,7 @@ public class AuthController {
     public ResponseEntity<RefreshResponse> refresh(@Valid @RequestBody RefreshReq req){
         logger.atInfo().log("refresh token request received");
         RefreshToken refreshToken = refreshTokenService.validateRefreshToken(req.getRefreshToken());
+
         String token = jwtService.refresh(refreshToken.getUser());
         return ResponseEntity.ok(new RefreshResponse(token,refreshToken.getToken()));
     }
@@ -97,5 +98,11 @@ public class AuthController {
         UserResponse response = userService.addIncome(userid, req.getAmount());
         logger.atInfo().log("Income added. ");
         return ResponseEntity.ok(response);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        Long userId = currentUserProvider.getCurrentUserId();
+        refreshTokenService.deleteByUserId(userId);
+        return ResponseEntity.ok("Logged out successfully");
     }
 }
