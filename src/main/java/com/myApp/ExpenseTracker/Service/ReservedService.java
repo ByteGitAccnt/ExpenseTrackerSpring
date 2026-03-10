@@ -35,8 +35,7 @@ public class ReservedService {
     }
     @Transactional
     public ReservedResponse addReserved( Long userid,ReservedRequest req){
-        User user = userService.getUserByid(userid)
-                .orElseThrow(() -> new ResourceNotFoundException("User doesn't exist for the userid :" + userid));
+        User user = userService.getUserByid(userid);
         reservedRepo.findByUser_IdAndLabel(userid, req.getLabel().toLowerCase())
                 .ifPresent( e -> {
                     throw new ResourceAlreadyExists("The reserved fund already exist for the user ");
