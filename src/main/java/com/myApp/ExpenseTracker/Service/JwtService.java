@@ -3,6 +3,8 @@ package com.myApp.ExpenseTracker.Service;
 import com.myApp.ExpenseTracker.Model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -13,12 +15,17 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-
-    private static final String SECRET =
-            "my-very-strong-secret-key-that-is-at-least-32-bytes";
-    private final SecretKey key =
-            Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
-
+    @Value("${jwt.secret}")
+    private String SECRET;// we injected from properties file , not yet set the env variable so plain injection
+    private SecretKey key;
+    //postCunstruct is used if we gave the plain private final SecretKey key =
+    //            Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    // it the SECRET won't get injected for the key generation on time , so null point exception. Now only after spring initialized
+    // and loaded the SECRET from .properties file , we start the initialization
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+    }
     public String generateToken(Authentication authentication) {
         return Jwts.builder()
                 .subject(authentication.getName())

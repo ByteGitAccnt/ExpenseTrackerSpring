@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -72,7 +71,8 @@ public class UserService {
         return new UserResponse(user.getId(), user.getUsername(),user.getEmail() ,user.getBalance());
     }
     @Transactional
-    public Optional<User> getUserByid(Long userid){
-        return userRepository.findById(userid);
+    public User getUserByid(Long userid){
+        return userRepository.findById(userid)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
     }
 }

@@ -4,7 +4,6 @@ package com.myApp.ExpenseTracker.Controller;
 import com.myApp.ExpenseTracker.Dto.AuthResponse;
 import com.myApp.ExpenseTracker.Dto.RefreshResponse;
 import com.myApp.ExpenseTracker.Dto.UserResponse;
-import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
 import com.myApp.ExpenseTracker.Model.CustomUserDetails;
 import com.myApp.ExpenseTracker.Model.RefreshToken;
 import com.myApp.ExpenseTracker.Req.AddMoneyRequest;
@@ -23,10 +22,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 
@@ -103,5 +99,10 @@ public class AuthController {
         Long userId = currentUserProvider.getCurrentUserId();
         refreshTokenService.deleteByUserId(userId);
         return ResponseEntity.ok("Logged out successfully");
+    }
+    @GetMapping("/balance")
+    public ResponseEntity<?> balance(){
+        Long userid = currentUserProvider.getCurrentUserId();
+        return ResponseEntity.ok(userService.getUserByid(userid).getBalance());
     }
 }
