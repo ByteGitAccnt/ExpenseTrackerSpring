@@ -1,6 +1,7 @@
 package com.myApp.ExpenseTracker.Service;
 
 import com.myApp.ExpenseTracker.Dto.ExpenseResponse;
+import com.myApp.ExpenseTracker.Dto.PagedResponse;
 import com.myApp.ExpenseTracker.Exeception.RequiredException;
 import com.myApp.ExpenseTracker.Model.Category;
 import com.myApp.ExpenseTracker.Model.Expense;
@@ -15,6 +16,10 @@ import com.myApp.ExpenseTracker.Exeception.InsufficientBalanceException;
 import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,9 +82,15 @@ public class ExpenseService {
                 expense.getCategory().getName());
     }
     @Transactional(readOnly = true)
-    public List<ExpenseResponse> listExpense(Long userid){
-        List<Expense> expenseList = expenseRepo.findByUser_Id(userid);
-        return expenseList.stream()
+    public PagedResponse<ExpenseResponse> listExpense(Long userid , int page , int size){
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("expenseDate").descending()
+                        .and(Sort.by("id").descending())
+        );
+        Page<Expense> expensePage = expenseRepo.findByUser_Id(userid, pageable);
+        List<ExpenseResponse> list = expensePage.stream()
                 .map(e -> new ExpenseResponse(
                         e.getId(),
                         e.getAmount(),
@@ -88,11 +99,26 @@ public class ExpenseService {
                         e.getCategory().getName()
                 ))
                 .toList();
+        return new PagedResponse<ExpenseResponse>(
+                list,
+                expensePage.getNumber() + 1,//since jpa is zero based
+                expensePage.getSize(),
+                expensePage.getTotalElements(),
+                expensePage.getTotalPages(),
+                expensePage.hasNext(),
+                expensePage.hasPrevious()
+        );
     }
     @Transactional(readOnly = true)
-    public List<ExpenseResponse> listExpenseByDate(Long userid , DateReq req){
-        List<Expense> expenseList = expenseRepo.findByUser_IdAndExpenseDateBetween(userid , req.getStartDate(),req.getEndDate());
-        return expenseList.stream()
+    public PagedResponse<ExpenseResponse> listExpenseByDate(Long userid , DateReq req , int page , int size){
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("expenseDate").descending()
+                        .and(Sort.by("id").descending())
+        );
+        Page<Expense> expensePage = expenseRepo.findByUser_IdAndExpenseDateBetween(userid , req.getStartDate(),req.getEndDate() , pageable);
+        List<ExpenseResponse> list = expensePage.stream()
                 .map(e -> new ExpenseResponse(
                         e.getId(),
                         e.getAmount(),
@@ -101,16 +127,32 @@ public class ExpenseService {
                         e.getCategory().getName()
                 ))
                 .toList();
+        return new PagedResponse<ExpenseResponse>(
+                list,
+                expensePage.getNumber() + 1,//since jpa is zero based
+                expensePage.getSize(),
+                expensePage.getTotalElements(),
+                expensePage.getTotalPages(),
+                expensePage.hasNext(),
+                expensePage.hasPrevious()
+        );
     }
     @Transactional(readOnly = true)
-    public List<ExpenseResponse> listExpenseByCategoryAndDate(Long userid , DateAndCatReq req){
-        List<Expense> expenseList = expenseRepo.findByUser_IdAndCategory_IdAndExpenseDateBetween(
+    public PagedResponse<ExpenseResponse> listExpenseByCategoryAndDate(Long userid , DateAndCatReq req , int page , int size){
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("expenseDate").descending()
+                        .and(Sort.by("id").descending())
+        );
+        Page<Expense> expensePage = expenseRepo.findByUser_IdAndCategory_IdAndExpenseDateBetween(
                 userid ,
                 req.getCatid(),
                 req.getStartDate(),
-                req.getEndDate()
+                req.getEndDate(),
+                pageable
         );
-        return expenseList.stream()
+        List<ExpenseResponse> list = expensePage.stream()
                 .map(r -> new ExpenseResponse(
                         r.getId(),
                         r.getAmount(),
@@ -119,6 +161,15 @@ public class ExpenseService {
                         r.getCategory().getName()
                 ))
                 .toList();
+        return new PagedResponse<ExpenseResponse>(
+                list,
+                expensePage.getNumber() + 1,//since jpa is zero based
+                expensePage.getSize(),
+                expensePage.getTotalElements(),
+                expensePage.getTotalPages(),
+                expensePage.hasNext(),
+                expensePage.hasPrevious()
+        );
     }
     @Transactional
     public void deleteExpense(Long userid, Long expid) {
