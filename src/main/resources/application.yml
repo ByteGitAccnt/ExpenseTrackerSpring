@@ -1,0 +1,43 @@
+rate-limit:
+  enabled: true
+
+  endpoints:
+    - name: LOGIN
+      paths:
+        - /api/auth/login
+      key-type: IP
+      capacity: 5
+      refill-tokens: 5
+      refill-duration: 60   # seconds
+
+    - name: REGISTER
+      paths:
+        - /api/auth/register
+      key-type: IP
+      capacity: 3
+      refill-tokens: 3
+      refill-duration: 60
+
+    - name: REFRESH
+      paths:
+        - /api/auth/refresh
+      key-type: USER
+      capacity: 10
+      refill-tokens: 10
+      refill-duration: 60
+
+    - name: LOGOUT
+      paths:
+        - /api/auth/logout
+      key-type: USER
+      capacity: 10
+      refill-tokens: 10
+      refill-duration: 60
+
+    - name: API
+      paths:
+        - /api/**
+      key-type: USER
+      capacity: 60
+      refill-tokens: 60
+      refill-duration: 60

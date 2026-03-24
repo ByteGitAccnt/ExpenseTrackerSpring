@@ -16,8 +16,8 @@ public class ProCurrentUserProvider implements CurrentUserProvider {
     @Override
     public Long getCurrentUserId() {
         Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null ||
+                SecurityContextHolder.getContext().getAuthentication();//!authentication.isAuthenticated() extra
+        if (authentication == null || !authentication.isAuthenticated() ||
                 !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
 
             throw new AccessDeniedException("User not authenticated");

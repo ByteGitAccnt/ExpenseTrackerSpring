@@ -14,6 +14,7 @@ import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.JwtService;
 import com.myApp.ExpenseTracker.Service.RefreshTokenService;
 import com.myApp.ExpenseTracker.Service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,9 +81,10 @@ public class AuthController {
         return ResponseEntity.ok(user);
     }
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshResponse> refresh(@Valid @RequestBody RefreshReq req){
+    public ResponseEntity<RefreshResponse> refresh(HttpServletRequest req){
         logger.atInfo().log("refresh token request received");
-        RefreshToken refreshToken = refreshTokenService.validateRefreshToken(req.getRefreshToken());
+        String refreshTokenValue = req.getHeader("Refresh-Token");
+        RefreshToken refreshToken = refreshTokenService.validateRefreshToken(refreshTokenValue);
         String token = jwtService.refresh(refreshToken.getUser());
         return ResponseEntity.ok(new RefreshResponse(token,refreshToken.getToken()));
     }
