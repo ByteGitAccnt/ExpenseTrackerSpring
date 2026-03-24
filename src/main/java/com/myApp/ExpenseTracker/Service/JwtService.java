@@ -1,5 +1,6 @@
 package com.myApp.ExpenseTracker.Service;
 
+import com.myApp.ExpenseTracker.Model.CustomUserDetails;
 import com.myApp.ExpenseTracker.Model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -27,8 +28,10 @@ public class JwtService {
         this.key = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
     }
     public String generateToken(Authentication authentication) {
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return Jwts.builder()
                 .subject(authentication.getName())
+                .claim("userid", userDetails.getId())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 600000))// 60,000 = 1min, 86400000 = 1day 600,000 10min
                 .signWith(key)
@@ -37,6 +40,7 @@ public class JwtService {
     public String refresh(User user) {
         return Jwts.builder()
                 .subject(user.getUsername())
+                .claim("userid", user.getId())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 600000))// 60,000 = 1min, 86400000 = 1day
                 .signWith(key)
@@ -50,9 +54,16 @@ public class JwtService {
                 .getPayload()
                 .getSubject();
     }
-
     public boolean isTokenValid(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return username.equals(userDetails.getUsername());
+    }
+    public Long extractUserid(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("userid", Long.class);
     }
 }
