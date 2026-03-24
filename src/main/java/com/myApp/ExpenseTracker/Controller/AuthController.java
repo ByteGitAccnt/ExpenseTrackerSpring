@@ -8,7 +8,6 @@ import com.myApp.ExpenseTracker.Model.CustomUserDetails;
 import com.myApp.ExpenseTracker.Model.RefreshToken;
 import com.myApp.ExpenseTracker.Req.AddMoneyRequest;
 import com.myApp.ExpenseTracker.Req.LoginRequest;
-import com.myApp.ExpenseTracker.Req.RefreshReq;
 import com.myApp.ExpenseTracker.Req.RegisterRequest;
 import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
 import com.myApp.ExpenseTracker.Service.JwtService;
