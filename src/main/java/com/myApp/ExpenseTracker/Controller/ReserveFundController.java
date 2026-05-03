@@ -1,7 +1,6 @@
 package com.myApp.ExpenseTracker.Controller;
 
 import com.myApp.ExpenseTracker.Dto.*;
-import com.myApp.ExpenseTracker.Req.DeletionRequest;
 import com.myApp.ExpenseTracker.Req.ReservedMoneyRequest;
 import com.myApp.ExpenseTracker.Req.ReservedRequest;
 import com.myApp.ExpenseTracker.Req.UpdateReserveRequest;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
 
@@ -33,11 +33,11 @@ public class ReserveFundController {
         ReservedResponse response = reservedService.addReserved(userid, req);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    @DeleteMapping
-    public ResponseEntity<?> delete(@Valid @RequestBody DeletionRequest req){
-        logger.atInfo().log("Request for deleting reserve fund received for label {}" ,req.getLabel());
+    @DeleteMapping("/{reserve_id}")
+    public ResponseEntity<?> delete(@PathVariable Long reserve_id){
+        logger.atInfo().log("Request for deleting reserve fund received for label {}" ,reserve_id);
         Long userid = currentUserProvider.getCurrentUserId();
-        reservedService.deleteReserve(userid, req.getLabel());
+        reservedService.deleteReserve(userid, reserve_id);
         return ResponseEntity.noContent().build();
     }
     @GetMapping
@@ -55,8 +55,8 @@ public class ReserveFundController {
     @PostMapping("/deposite")
     public ResponseEntity<ReservedResponse> addMoney(@Valid @RequestBody ReservedMoneyRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request received for adding money for user {}" , userid);
-        ReservedResponse response = reservedService.addAmount(userid, req.getLabel(), req.getAmount());
+        logger.info("ReserveFundController.addMoney - UserID: {}, Label: {}, Amount: {}", userid, req.getLabel(), req.getAmount());
+        ReservedResponse response = reservedService.addAmount(userid, req.getLabel().trim(), req.getAmount());
         return ResponseEntity.ok(response);
     }
     @PostMapping("/withdraw")
@@ -66,6 +66,10 @@ public class ReserveFundController {
         ReservedResponse response = reservedService.withdrawAmount(userid, req.getLabel(), req.getAmount());
         return ResponseEntity.ok(response);
     }
-
+    @GetMapping("/balance")
+    public ResponseEntity<?> getBalance(){
+        Long userid = currentUserProvider.getCurrentUserId();
+        logger.atInfo().log("Request received for Reserved balance for user {}" , userid);
+        return ResponseEntity.ok(new ReserveBalance(reservedService.getTotalReserved(userid)));
+    }
 }
-

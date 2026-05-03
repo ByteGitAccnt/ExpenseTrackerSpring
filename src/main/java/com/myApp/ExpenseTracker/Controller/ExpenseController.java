@@ -29,12 +29,15 @@ public class ExpenseController {
         logger.atInfo().log("Expense created for user {}"  , userid);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/{page}")
-    public ResponseEntity<PagedResponse<ExpenseResponse>> list( @RequestParam(defaultValue = "0") int page) {
+    @GetMapping
+    public ResponseEntity<PagedResponse<ExpenseResponse>> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
         Long userId = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense listing received for user {}", userId);
         // size is hardcoded for consistency , if need we can define with param with condition
-        PagedResponse<ExpenseResponse> response = expenseService.listExpense(userId, page, 15);
+        PagedResponse<ExpenseResponse> response = expenseService.listExpense(userId, page, size);
         return ResponseEntity.ok(response);
     }
 
@@ -42,14 +45,14 @@ public class ExpenseController {
     public ResponseEntity<PagedResponse<ExpenseResponse>> list(@Valid @RequestBody DateReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense listing by date received for user {}" , userid);
-        PagedResponse<ExpenseResponse> response = expenseService.listExpenseByDate(userid ,req , req.getPage(), 15);
+        PagedResponse<ExpenseResponse> response = expenseService.listExpenseByDate(userid ,req , req.getPage(), req.getSize());
         return ResponseEntity.ok(response);
     }
     @GetMapping("/category")
     public ResponseEntity<PagedResponse<ExpenseResponse>> list(@Valid @RequestBody DateAndCatReq req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for expense listing by date and category received for user {}" , userid);
-        PagedResponse<ExpenseResponse> response = expenseService.listExpenseByCategoryAndDate(userid ,req , req.getPage(), 15 );
+        PagedResponse<ExpenseResponse> response = expenseService.listExpenseByCategoryAndDate(userid ,req , req.getPage(), req.getSize());
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{exp_id}")

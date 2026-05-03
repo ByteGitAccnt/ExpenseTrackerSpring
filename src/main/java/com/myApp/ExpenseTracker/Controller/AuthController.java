@@ -1,6 +1,7 @@
 package com.myApp.ExpenseTracker.Controller;
 
 
+import com.myApp.ExpenseTracker.Dto.AccntBalance;
 import com.myApp.ExpenseTracker.Dto.AuthResponse;
 import com.myApp.ExpenseTracker.Dto.RefreshResponse;
 import com.myApp.ExpenseTracker.Dto.UserResponse;
@@ -104,6 +105,6 @@ public class AuthController {
     @GetMapping("/balance")
     public ResponseEntity<?> balance(){
         Long userid = currentUserProvider.getCurrentUserId();
-        return ResponseEntity.ok(userService.getUserByid(userid).getBalance());
+        return ResponseEntity.ok(new AccntBalance(userService.getUserByid(userid).getBalance()));
     }
 }
