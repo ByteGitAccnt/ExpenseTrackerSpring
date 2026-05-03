@@ -18,4 +18,6 @@ public class DateAndCatReq {
     private Long catid;
     @Builder.Default
     private int page = 0;
+    @Builder.Default
+    private int size = 10;
 }
