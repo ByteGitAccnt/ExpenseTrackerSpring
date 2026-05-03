@@ -25,10 +25,12 @@ public class CategoryService {
     private final UserRepository userRepo;
     private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
     private final CategoryRepository catRepo;
+    private List<Category> categoryList;
     public CategoryService(CategoryRepository catRepo,AuditService auditService,UserRepository userRepo ){
         this.auditService = auditService;
         this.catRepo = catRepo;
         this.userRepo = userRepo;
+        this.categoryList = new ArrayList<>();
     }
     public Category addCategory(Long userid,String catname){
         User user = userRepo.getReferenceById(userid);
@@ -72,7 +74,7 @@ public class CategoryService {
     }
     @Transactional(readOnly = true)
     public List<CategoryResponseList> listCategory(Long userid){
-        List<Category> categoryList = catRepo.findByUser_Id(userid);
+        cache(userid);
         List<CategoryResponseList> list = categoryList.stream()
                 .map(r -> new CategoryResponseList(
                         r.getId(),
@@ -87,6 +89,9 @@ public class CategoryService {
     public Category getByNameForUser(String name, Long userId) {
         return findOrCreate(userId,name.toLowerCase());
     }
-
+    @Transactional(readOnly = true)
+    private void  cache(Long userId){
+        if(categoryList.isEmpty()) categoryList = catRepo.findByUser_Id(userId);
+    }
 }
 
