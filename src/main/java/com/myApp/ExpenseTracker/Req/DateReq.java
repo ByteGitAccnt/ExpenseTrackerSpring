@@ -15,4 +15,6 @@ public class DateReq {
     private LocalDate endDate;
     @Builder.Default
     private int page = 0;
+    @Builder.Default
+    private int size = 10;
 }

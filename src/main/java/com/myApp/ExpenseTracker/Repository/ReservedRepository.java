@@ -19,4 +19,5 @@ public interface ReservedRepository extends JpaRepository<Reserved,Long> {
         WHERE r.user.id = :userId
     """)
     BigDecimal sumReservedByUserId(@Param("userId") Long userId);
+    Optional<Reserved> findByIdAndUser_Id(Long id , Long userId);
 }

@@ -46,9 +46,9 @@ public class ReservedService {
         return new ReservedResponse(reserved.getId(),reserved.getLabel(),reserved.getAmount(),reserved.getNote());
     }
     @Transactional
-    public void deleteReserve( Long userid ,String label ){
-        Reserved reserved = reservedRepo.findByUser_IdAndLabel(userid,label.toLowerCase())
-                .orElseThrow(() -> new ResourceNotFoundException("Reserved don't exist for user : " + userid + " with label:" + label));
+    public void deleteReserve( Long userid ,Long id ){
+        Reserved reserved = reservedRepo.findByIdAndUser_Id(id,userid)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserved don't exist for user : " + userid + " with id:" + id));
         reservedRepo.delete(reserved);
         logger.atInfo().log("Reserved amount deleted for user : {}" , userid);
         auditService.logSuccess(userid,EntityType.RESERVED,reserved.getId(),"Reserved amount deleted successful");
@@ -88,8 +88,17 @@ public class ReservedService {
     }
     @Transactional
     public ReservedResponse addAmount( Long userid,String label , BigDecimal amnt){
+        logger.info("addAmount called - UserID: {}, Label: {}", userid, label);
+
+        // First, let's check what reserves exist for this user
+        List<Reserved> userReserves = reservedRepo.findByUser_Id(userid);
+        logger.info("User {} has {} reserves: {}", userid, userReserves.size(),
+            userReserves.stream().map(r -> r.getLabel()).toList());
+
+
         Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase())
-                .orElseThrow(() -> new ResourceNotFoundException("no reserve found for user :" + userid));
+                .orElseThrow(() -> new ResourceNotFoundException("no reserve found for user :" + userid + " with label: " + label));
+
         BigDecimal balance = userRepo.findBalanceById(userid);
         if (balance == null) balance = BigDecimal.ZERO;
 
@@ -107,7 +116,7 @@ public class ReservedService {
     }
     @Transactional
     public ReservedResponse withdrawAmount(Long userid,String label , BigDecimal amnt){
-        Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase())
+        Reserved res = reservedRepo.findByUser_IdAndLabel(userid, label.toLowerCase().trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Reserve not found for user:" + userid));
         BigDecimal currentAmount = res.getAmount();
         if (currentAmount.compareTo(BigDecimal.ZERO) <= 0) {

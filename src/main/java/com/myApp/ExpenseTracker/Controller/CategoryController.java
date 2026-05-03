@@ -38,7 +38,7 @@ public class CategoryController {
         categoryService.deleteCategory(userid, req.getName());
         return ResponseEntity.ok().build();
     }
-    @GetMapping("/list")
+    @GetMapping
     public ResponseEntity<?> listCategory(){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.atInfo().log("Request for listing category received for user {}" ,userid);

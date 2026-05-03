@@ -14,7 +14,7 @@ public class Reserved {
 
     public Reserved(User user, String label , String note , BigDecimal amount){
         this.amount = amount;
-        this.label = label.toLowerCase();
+        this.label = label.toLowerCase().trim();
         this.note = note;
         this.user = user;
     }
