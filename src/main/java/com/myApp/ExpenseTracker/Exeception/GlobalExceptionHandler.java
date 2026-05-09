@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -46,5 +48,18 @@ public class GlobalExceptionHandler {
                 req.getRequestURI()
         );
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<ErrorResponse> handleAuthException(AuthException ex, HttpServletRequest req) {
+        logger.warn("Auth error at {}: {}", req.getRequestURI(), ex.getMessage());
+
+        ErrorResponse response = ErrorResponse.of(
+                ex.getStatus(),
+                ex.getMessage(),
+                req.getServletPath()
+        );
+
+        return ResponseEntity.status(ex.getStatus()).body(response);
     }
 }

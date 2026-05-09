@@ -1,7 +1,9 @@
 package com.myApp.ExpenseTracker.Service;
 
+import com.myApp.ExpenseTracker.Exeception.InvalidTokenException;
 import com.myApp.ExpenseTracker.Model.CustomUserDetails;
 import com.myApp.ExpenseTracker.Model.User;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -33,6 +35,7 @@ public class JwtService {
                 .subject(authentication.getName())
                 .claim("userid", userDetails.getId())
                 .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 60000/4))// 60,000 = 1min, 86400000 = 1day 600,000 10min
                 .expiration(new Date(System.currentTimeMillis() + 86400000))// 60,000 = 1min, 86400000 = 1day 600,000 10min
                 .signWith(key)
                 .compact();
@@ -42,28 +45,37 @@ public class JwtService {
                 .subject(user.getUsername())
                 .claim("userid", user.getId())
                 .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 60000*2 ))// 60,000 = 1min, 86400000 = 1day 86400000*7 = 7days
                 .expiration(new Date(System.currentTimeMillis() + 86400000*7))// 60,000 = 1min, 86400000 = 1day
                 .signWith(key)
                 .compact();
     }
     public String extractUsername(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        try {
+            return Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (JwtException e) {
+            throw new InvalidTokenException("Invalid token");
+        }
     }
     public boolean isTokenValid(String token, UserDetails userDetails) {
         String username = extractUsername(token);
         return username.equals(userDetails.getUsername());
     }
     public Long extractUserid(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .get("userid", Long.class);
+        try {
+            return Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .get("userid", Long.class);
+        } catch (JwtException e) {
+        throw new InvalidTokenException("invalid Token");
+        }
     }
 }

@@ -85,7 +85,13 @@ public class AuthController {
         logger.atInfo().log("refresh token request received");
         String refreshTokenValue = req.getHeader("Refresh-Token");
         RefreshToken refreshToken = refreshTokenService.validateRefreshToken(refreshTokenValue);
-        String token = jwtService.refresh(refreshToken.getUser());
+        String token;
+        try {
+            token = jwtService.refresh(refreshToken.getUser());
+        } catch (Exception e) {
+            logger.atError().log("JWT refresh failed", e);
+            throw new RuntimeException(e);
+        }
         return ResponseEntity.ok(new RefreshResponse(token,refreshToken.getToken()));
     }
     @PostMapping("/income")
@@ -98,8 +104,10 @@ public class AuthController {
     }
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
+        logger.atInfo().log("Logout request received");
         Long userId = currentUserProvider.getCurrentUserId();
         refreshTokenService.deleteByUserId(userId);
+        logger.atInfo().log("Logout successful");
         return ResponseEntity.ok("Logged out successfully");
     }
     @GetMapping("/balance")

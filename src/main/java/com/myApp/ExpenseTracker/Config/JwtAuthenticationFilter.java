@@ -1,7 +1,10 @@
 package com.myApp.ExpenseTracker.Config;
 
+import com.myApp.ExpenseTracker.Exeception.InvalidTokenException;
+import com.myApp.ExpenseTracker.Exeception.TokenExpiredException;
 import com.myApp.ExpenseTracker.Service.CustomUserDetailsService;
 import com.myApp.ExpenseTracker.Service.JwtService;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,20 +39,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         String token = authHeader.substring(7);
-        String username = jwtService.extractUsername(token);
+        try {
+            String username = jwtService.extractUsername(token);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            if (jwtService.isTokenValid(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (jwtService.isTokenValid(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+            logger.warn("Expired JWT token provided");
+            // Let the exception propagate to be caught by GlobalExceptionHandler
+            throw new TokenExpiredException();
+        } catch (io.jsonwebtoken.MalformedJwtException |
+                 io.jsonwebtoken.security.SignatureException |
+                 io.jsonwebtoken.UnsupportedJwtException ex) {
+            logger.warn("Invalid JWT token provided: {}");
+            // Let the exception propagate to be caught by GlobalExceptionHandler
+            throw new InvalidTokenException("Invalid refresh token");
         }
         filterChain.doFilter(request, response);
     }
+
 }
