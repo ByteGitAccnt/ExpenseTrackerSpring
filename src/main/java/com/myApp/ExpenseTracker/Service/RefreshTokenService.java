@@ -14,9 +14,9 @@ import java.util.UUID;
 @Service
 public class RefreshTokenService  {
     private final RefreshTokenRepository refreshTokenRepository;
-    //private final Duration refreshTokenDuration = Duration.ofDays(7);
+    private final Duration refreshTokenDuration = Duration.ofDays(7);
     // for testing
-    private final Duration refreshTokenDuration = Duration.ofMinutes(2);
+    //private final Duration refreshTokenDuration = Duration.ofMinutes(2);
 
     public RefreshTokenService(RefreshTokenRepository refreshTokenRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
