@@ -36,6 +36,7 @@ public class JwtService {
                 .claim("userid", userDetails.getId())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 60000/4))// 60,000 = 1min, 86400000 = 1day 600,000 10min
+                .expiration(new Date(System.currentTimeMillis() + 86400000))// 60,000 = 1min, 86400000 = 1day 600,000 10min
                 .signWith(key)
                 .compact();
     }
@@ -45,6 +46,7 @@ public class JwtService {
                 .claim("userid", user.getId())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 60000*2 ))// 60,000 = 1min, 86400000 = 1day 86400000*7 = 7days
+                .expiration(new Date(System.currentTimeMillis() + 86400000*7))// 60,000 = 1min, 86400000 = 1day
                 .signWith(key)
                 .compact();
     }
