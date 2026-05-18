@@ -52,7 +52,7 @@ public class ReserveFundController {
         ReservedResponse response = reservedService.updateReserveLabel(userid , req);
         return ResponseEntity.ok(response);
     }
-    @PostMapping("/deposite")
+    @PostMapping("/deposit")
     public ResponseEntity<ReservedResponse> addMoney(@Valid @RequestBody ReservedMoneyRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
         logger.info("ReserveFundController.addMoney - UserID: {}, Label: {}, Amount: {}", userid, req.getLabel(), req.getAmount());
