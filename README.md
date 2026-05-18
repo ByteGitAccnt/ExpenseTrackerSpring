@@ -287,7 +287,6 @@ Returns to client (e.g., 400 Bad Request, 404 Not Found, 500 Internal Server Err
 | `POST` | `/api/reserve/withdraw` | Withdraw money from reserve | ✅ Yes |
 | `GET` | `/api/reserve/balance` | Get total reserved amount | ✅ Yes |
 
-⚠️ **Note**: The endpoint is spelled `/deposite` (not `/deposit`). Ensure clients use the exact path.
 
 ---
 
@@ -484,13 +483,9 @@ All exceptions are caught and processed by `GlobalExceptionHandler` (`com.myApp.
 
 ## Known Limitations
 
-1. **Label Normalization**: Some setters (e.g., `Reserved#setLabel`) lowercase but may not trim whitespace. Mismatch between stored and searched labels can cause "not found" errors.
+1. **Rate-limiting Binding**: If Lombok annotation processing is disabled, Spring may report "No setter found for property 'enabled'" in `RateLimitProperties`.
 
-2. **Rate-limiting Binding**: If Lombok annotation processing is disabled, Spring may report "No setter found for property 'enabled'" in `RateLimitProperties`.
-
-3. **CORS Configuration**: CORS handling may need explicit configuration if frontend runs on a different origin.
-
-4. **Endpoint Typo**: The reserve deposit endpoint is `/deposite` (not `/deposit`). Clients must use the exact spelling.
+2. **CORS Configuration**: CORS handling may need explicit configuration if frontend runs on a different origin.
 
 5. **No Role-Based Access Control (RBAC)**: Currently, all authenticated users have the same privileges. No admin/user role distinction yet.
 
