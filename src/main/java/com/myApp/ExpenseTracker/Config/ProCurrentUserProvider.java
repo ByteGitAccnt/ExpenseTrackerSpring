@@ -9,7 +9,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dev")
 public class ProCurrentUserProvider implements CurrentUserProvider {
     @Override
     public Long getCurrentUserId() {
