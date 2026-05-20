@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN gradle bootJar -x test
+RUN chmod +x gradlew
+RUN ./gradlew bootJar -x test
 
 FROM eclipse-temurin:21-jre
 
