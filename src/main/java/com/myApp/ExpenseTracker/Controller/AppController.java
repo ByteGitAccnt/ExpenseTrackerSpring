@@ -37,11 +37,9 @@ public class AppController {
                         MediaType.parseMediaType(
                                 "application/vnd.android.package-archive"
                         )
-                )
-                .header(
+                ).header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"app-release.apk\""
-                )
-                .body(resource);
+                ).body(resource);
     }
 }

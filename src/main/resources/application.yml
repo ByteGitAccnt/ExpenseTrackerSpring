@@ -18,6 +18,14 @@ rate-limit:
       refill-tokens: 3
       refill-duration: 60
 
+    - name: APP
+      paths:
+        - /api/app/**
+      key-type: IP
+      capacity: 3
+      refill-tokens: 3
+      refill-duration: 60
+
     - name: REFRESH
       paths:
         - /api/auth/refresh
