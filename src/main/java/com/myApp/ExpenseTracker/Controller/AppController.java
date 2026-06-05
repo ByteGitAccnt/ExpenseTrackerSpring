@@ -13,7 +13,7 @@ public class AppController {
     public ResponseEntity <AppInfoResponse> getAppInfo(){
         //https://expense-tracker-dtfp.onrender.com/apk/app-release.apk direct download by this link
         return ResponseEntity.ok().body(new AppInfoResponse(
-                "1.0.0",
+                "1.0.1",
                 "1.0.0" ,
                 false,
                 "https://expense-tracker-dtfp.onrender.com/apk/app-release.apk"
