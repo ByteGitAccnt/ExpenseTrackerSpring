@@ -16,7 +16,7 @@ public class AppController {
                 "1.0.1",
                 "1.0.0" ,
                 false,
-                "https://expense-tracker-dtfp.onrender.com/apk/app-release.apk"
+                "https://github.com/ByteGitAccnt/ExpenseTrackerSpring/releases/download/v1.0.0/app-release.apk"
         ));
     }
 }
