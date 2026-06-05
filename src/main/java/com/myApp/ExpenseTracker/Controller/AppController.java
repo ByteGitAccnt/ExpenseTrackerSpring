@@ -12,7 +12,7 @@ public class AppController {
     @GetMapping("/info")
     public ResponseEntity <AppInfoResponse> getAppInfo(){
         return ResponseEntity.ok().body(new AppInfoResponse(
-                "1.0.1",
+                "1.0.0",
                 "1.0.0" ,
                 false,
                 "https://github.com/ByteGitAccnt/ExpenseTrackerSpring/releases/download/v1.0.0/app-release.apk"
