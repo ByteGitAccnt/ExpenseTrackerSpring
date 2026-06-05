@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppController {
     @GetMapping("/info")
     public ResponseEntity <AppInfoResponse> getAppInfo(){
-        //https://expense-tracker-dtfp.onrender.com/apk/app-release.apk direct download by this link
         return ResponseEntity.ok().body(new AppInfoResponse(
                 "1.0.1",
                 "1.0.0" ,

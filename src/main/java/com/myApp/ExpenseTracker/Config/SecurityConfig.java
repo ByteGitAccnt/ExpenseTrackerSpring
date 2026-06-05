@@ -30,7 +30,7 @@ public class SecurityConfig {
                 // Define authorization rules
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login",
-                                "/api/auth/register","/api/auth/refresh","/api/app/info")
+                                "/api/auth/register","/api/auth/refresh","/api/app/info","/apk/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated()
