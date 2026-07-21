@@ -73,11 +73,11 @@ public class UserService {
         return new UserResponse(user.getId(), user.getUsername(), user.getEmail() , user.getBalance());
     }
     @Transactional
-    public UserResponse addIncome(Long userid, BigDecimal amnt){
+    public UserResponse addIncome(Long userid, BigDecimal amnt , String desc){
         User user = userRepository.findByIdForUpdate(userid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found for user:" + userid));
         user.setBalance(user.getBalance().add(amnt));
-        transactionService.recordIncome(user , amnt,"Income added for user:"+userid);
+        transactionService.recordIncome(user , amnt,desc);
         auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());
         return new UserResponse(user.getId(), user.getUsername(),user.getEmail() ,user.getBalance());
     }

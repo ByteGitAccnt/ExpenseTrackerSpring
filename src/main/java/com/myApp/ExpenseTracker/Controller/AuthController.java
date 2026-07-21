@@ -99,9 +99,4 @@ public class AuthController {
         return ResponseEntity.ok("Logged out successfully");
     }
 
-    @GetMapping("/trans")
-    public ResponseEntity<?> trans(){
-        Long userid = currentUserProvider.getCurrentUserId();
-        return ResponseEntity.ok(userService.getIncomeTransactionList(userid));
-    }
 }

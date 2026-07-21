@@ -30,7 +30,7 @@ public class BalanceController {
     public  ResponseEntity<UserResponse> addIncome(@Valid @RequestBody AddMoneyRequest req){
         logger.atInfo().log("Add Income request received. ");
         Long userid = currentUserProvider.getCurrentUserId();
-        UserResponse response = userService.addIncome(userid, req.getAmount());
+        UserResponse response = userService.addIncome(userid, req.getAmount() , req.getDescription());
         logger.atInfo().log("Income added. ");
         return ResponseEntity.ok(response);
     }

@@ -1,6 +1,7 @@
 package com.myApp.ExpenseTracker.Service;
 
 import com.lowagie.text.*;
+import com.lowagie.text.Font;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
@@ -10,7 +11,10 @@ import com.myApp.ExpenseTracker.Dto.TransactionResponse;
 import com.myApp.ExpenseTracker.Model.ReportData;
 import org.springframework.stereotype.Component;
 
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Component
 public class PdfGenerator {
@@ -24,21 +28,54 @@ public class PdfGenerator {
 
             document.open();
 
-            document.add(new Paragraph("Expense Tracker Report"));
+            Font titleFont = FontFactory.getFont(
+                    FontFactory.HELVETICA_BOLD,
+                    20
+            );
+
+            Paragraph title = new Paragraph("ETrace Report", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(15f);
+            Paragraph subTitle = new Paragraph(
+                    "Generated on: " + LocalDate.now()
+            );
+            subTitle.setAlignment(Element.ALIGN_CENTER);
+            subTitle.setSpacingAfter(20f);
+            document.add(title);
+            document.add(subTitle);
+
+            PdfPTable summaryTable = new PdfPTable(2);
+            summaryTable.setWidthPercentage(100);
+            summaryTable.setSpacingBefore(10f);
+            summaryTable.setSpacingAfter(15f);
+            summaryTable.setWidths(new float[]{3f, 2f});
+
+            // Section Title
+            summaryTable.addCell(sectionCell("Account Summary", 2));
+
+            // Column Headers
+            summaryTable.addCell(headerCell("Details"));
+            summaryTable.addCell(headerCell("Amount"));
+
+            // Total Balance
+            addSummaryRow(summaryTable, "Total Balance", reportData.getTotalBalance(), false);
+
+
+            // Total Reserved
+            addSummaryRow(summaryTable, "Total Reserved", reportData.getTotalReserved(), true);
+
+            // Available Balance
+            addSummaryRow(summaryTable, "Available Balance", reportData.getAvailableBalance(), false);
+            document.add(summaryTable);
 
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Account Summary"));
-            document.add(new Paragraph("----------------------------------------"));
-            document.add(new Paragraph("Total Balance : ₹" + reportData.getTotalBalance()));
-            document.add(new Paragraph("Total Reserved : ₹" + reportData.getTotalReserved()));
-            document.add(new Paragraph("Available Balance : ₹" + reportData.getAvailableBalance()));
-
 
             PdfPTable reserveTable = new PdfPTable(3);
             reserveTable.setWidthPercentage(100);
             reserveTable.setSpacingBefore(10f);
             reserveTable.setWidths(new float[]{3f, 2f, 5f});
 
+            reserveTable.addCell(sectionCell("Reserved Funds", 3));
             reserveTable.addCell(headerCell("Label"));
             reserveTable.addCell(headerCell("Amount"));
             reserveTable.addCell(headerCell("Note"));
@@ -50,7 +87,6 @@ public class PdfGenerator {
             }
 
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Reserved Amounts"));
             document.add(reserveTable);
 
             PdfPTable expenseTable = new PdfPTable(4);
@@ -58,6 +94,7 @@ public class PdfGenerator {
             expenseTable.setSpacingBefore(10f);
             expenseTable.setWidths(new float[]{2f, 3f, 2f, 5f});
 
+            expenseTable.addCell(sectionCell("Expense Details", 4));
             expenseTable.addCell( headerCell("Date") );
             expenseTable.addCell(headerCell("Category"));
             expenseTable.addCell(headerCell("Amount"));
@@ -74,7 +111,6 @@ public class PdfGenerator {
             }
 
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Expense Details"));
             document.add(expenseTable);
 
 
@@ -83,6 +119,7 @@ public class PdfGenerator {
             incomeTable.setSpacingBefore(10f);
             incomeTable.setWidths(new float[]{2f, 2f, 6f});
 
+            incomeTable.addCell(sectionCell("Income Details", 3));
             incomeTable.addCell(headerCell("Date"));
             incomeTable.addCell(headerCell("Amount"));
             incomeTable.addCell(headerCell("Description"));
@@ -97,7 +134,6 @@ public class PdfGenerator {
             }
 
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("Income Details"));
             document.add(incomeTable);
 
             document.close();
@@ -116,6 +152,52 @@ public class PdfGenerator {
 
         PdfPCell cell = new PdfPCell(new Phrase(text, font));
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setBackgroundColor(new Color(230, 230, 230));
+        cell.setPadding(8f);
+
         return cell;
+    }
+    private static PdfPCell sectionCell(String title, int colspan) {
+
+        Font font = FontFactory.getFont(
+                FontFactory.HELVETICA_BOLD,
+                14
+        );
+
+        PdfPCell cell = new PdfPCell(new Phrase(title, font));
+        cell.setColspan(colspan);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setBackgroundColor(new Color(200, 220, 255));
+        cell.setPadding(10f);
+
+        return cell;
+    }
+    private static PdfPCell dataCell(String value, boolean alternate, int alignment) {
+
+        PdfPCell cell = new PdfPCell(new Phrase(value));
+        cell.setPadding(6f);
+        cell.setHorizontalAlignment(alignment);
+
+        if (alternate) {
+            cell.setBackgroundColor(new Color(245, 245, 245));
+        }
+
+        return cell;
+    }
+    private static void addSummaryRow(
+            PdfPTable table,
+            String label,
+            BigDecimal amount,
+            boolean alternate) {
+
+        table.addCell(dataCell(label, alternate, Element.ALIGN_LEFT));
+
+        table.addCell(dataCell(
+                String.format("₹%,.2f", amount),
+                alternate,
+                Element.ALIGN_RIGHT));
     }
 }
