@@ -1,4 +1,4 @@
-package com.myApp.ExpenseTracker.Service;
+package com.myApp.ExpenseTracker.Utils;
 
 
 public enum EntityType {
@@ -6,5 +6,6 @@ public enum EntityType {
     EXPENSE,
     RESERVED,
     USER,
-    INCOME
+    INCOME,
+    REPORT
 }

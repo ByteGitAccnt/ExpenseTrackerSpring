@@ -9,6 +9,7 @@ import com.myApp.ExpenseTracker.Model.Category;
 import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.CategoryRepository;
 import com.myApp.ExpenseTracker.Repository.UserRepository;
+import com.myApp.ExpenseTracker.Utils.EntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class CategoryService {
     public Category addCategory(Long userid,String catname){
         User user = userRepo.getReferenceById(userid);
         Category  cat = catRepo.save(new Category(catname,user));
-        auditService.logSuccess(userid,EntityType.CATEGORY,cat.getId(),"Category created: " + cat.getName());
+        auditService.logSuccess(userid, EntityType.CATEGORY,cat.getId(),"Category created: " + cat.getName());
         return cat;
     }
     @Transactional

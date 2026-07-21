@@ -1,19 +1,14 @@
 package com.myApp.ExpenseTracker.Controller;
 
 
-import com.myApp.ExpenseTracker.Dto.AccntBalance;
 import com.myApp.ExpenseTracker.Dto.AuthResponse;
 import com.myApp.ExpenseTracker.Dto.RefreshResponse;
 import com.myApp.ExpenseTracker.Dto.UserResponse;
 import com.myApp.ExpenseTracker.Model.CustomUserDetails;
 import com.myApp.ExpenseTracker.Model.RefreshToken;
-import com.myApp.ExpenseTracker.Req.AddMoneyRequest;
 import com.myApp.ExpenseTracker.Req.LoginRequest;
 import com.myApp.ExpenseTracker.Req.RegisterRequest;
-import com.myApp.ExpenseTracker.Service.CurrentUserProvider;
-import com.myApp.ExpenseTracker.Service.JwtService;
-import com.myApp.ExpenseTracker.Service.RefreshTokenService;
-import com.myApp.ExpenseTracker.Service.UserService;
+import com.myApp.ExpenseTracker.Service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -38,7 +33,7 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     public AuthController(UserService userService,CurrentUserProvider provider,AuthenticationManager authenticationManager,
-                          JwtService jwtService,RefreshTokenService refreshTokenService) {
+                          JwtService jwtService,RefreshTokenService refreshTokenService,TransactionService transactionService) {
         this.userService = userService;
         this.currentUserProvider = provider;
         this.authenticationManager = authenticationManager;
@@ -94,14 +89,7 @@ public class AuthController {
         }
         return ResponseEntity.ok(new RefreshResponse(token,refreshToken.getToken()));
     }
-    @PostMapping("/income")
-    public  ResponseEntity<UserResponse> addIncome(@Valid @RequestBody AddMoneyRequest req){
-        logger.atInfo().log("Add Income request received. ");
-        Long userid = currentUserProvider.getCurrentUserId();
-        UserResponse response = userService.addIncome(userid, req.getAmount());
-        logger.atInfo().log("Income added. ");
-        return ResponseEntity.ok(response);
-    }
+
     @PostMapping("/logout")
     public ResponseEntity<String> logout() {
         logger.atInfo().log("Logout request received");
@@ -110,9 +98,10 @@ public class AuthController {
         logger.atInfo().log("Logout successful");
         return ResponseEntity.ok("Logged out successfully");
     }
-    @GetMapping("/balance")
-    public ResponseEntity<?> balance(){
+
+    @GetMapping("/trans")
+    public ResponseEntity<?> trans(){
         Long userid = currentUserProvider.getCurrentUserId();
-        return ResponseEntity.ok(new AccntBalance(userService.getUserByid(userid).getBalance()));
+        return ResponseEntity.ok(userService.getIncomeTransactionList(userid));
     }
 }

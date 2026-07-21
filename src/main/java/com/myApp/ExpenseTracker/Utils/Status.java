@@ -1,4 +1,4 @@
-package com.myApp.ExpenseTracker.Service;
+package com.myApp.ExpenseTracker.Utils;
 
 public enum Status {
     SUCCESS,

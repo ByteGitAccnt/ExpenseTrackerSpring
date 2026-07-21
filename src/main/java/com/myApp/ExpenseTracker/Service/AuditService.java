@@ -2,6 +2,8 @@ package com.myApp.ExpenseTracker.Service;
 
 import com.myApp.ExpenseTracker.Model.Audit;
 import com.myApp.ExpenseTracker.Repository.AuditRepository;
+import com.myApp.ExpenseTracker.Utils.EntityType;
+import com.myApp.ExpenseTracker.Utils.Status;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
