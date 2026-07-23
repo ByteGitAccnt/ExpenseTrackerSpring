@@ -1,7 +1,6 @@
 package com.myApp.ExpenseTracker.Dto;
 
 import java.time.Instant;
-import java.util.List;
 
 public record AuthResponse(
         String accessToken,
