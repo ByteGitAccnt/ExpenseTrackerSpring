@@ -10,6 +10,7 @@ import com.myApp.ExpenseTracker.Repository.ReservedRepository;
 import com.myApp.ExpenseTracker.Repository.UserRepository;
 import com.myApp.ExpenseTracker.Exeception.ResourceAlreadyExists;
 import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
+import com.myApp.ExpenseTracker.Utils.EntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class ReservedService {
                 });
         Reserved reserved = reservedRepo.save(new Reserved(user,req.getLabel(),req.getNote(),req.getAmount()));
         logger.atInfo().log("Reserved created: {} for user {}" , reserved.getLabel(),userid);
-        auditService.logSuccess(userid,EntityType.RESERVED, reserved.getId(), "Reserved amount created successful");
+        auditService.logSuccess(userid, EntityType.RESERVED, reserved.getId(), "Reserved amount created successful");
         return new ReservedResponse(reserved.getId(),reserved.getLabel(),reserved.getAmount(),reserved.getNote());
     }
     @Transactional

@@ -1,6 +1,7 @@
 package com.myApp.ExpenseTracker.Repository;
 
 import com.myApp.ExpenseTracker.Model.Expense;
+import com.myApp.ExpenseTracker.Model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,6 +27,11 @@ public interface ExpenseRepository extends JpaRepository<Expense,Long> {
             LocalDate start,
             LocalDate end,
             Pageable pageable
+    );
+    List<Expense> findByUserAndExpenseDateBetween(
+            User user,
+            LocalDate fromDate,
+            LocalDate toDate
     );
     Optional<Expense> findByIdAndUser_Id(Long expId, Long userId);
 }

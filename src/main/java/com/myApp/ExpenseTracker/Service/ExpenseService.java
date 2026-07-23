@@ -14,6 +14,7 @@ import com.myApp.ExpenseTracker.Req.DateReq;
 import com.myApp.ExpenseTracker.Req.ExpenseUpdateReq;
 import com.myApp.ExpenseTracker.Exeception.InsufficientBalanceException;
 import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
+import com.myApp.ExpenseTracker.Utils.EntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -73,7 +75,7 @@ public class ExpenseService {
                 user
         );
         Expense exp = expenseRepo.save(expense);
-        auditService.logSuccess(userId,EntityType.EXPENSE, exp.getId(), "Expense created");
+        auditService.logSuccess(userId, EntityType.EXPENSE, exp.getId(), "Expense created");
         return new ExpenseResponse(
                 expense.getId(),
                 expense.getAmount(),
@@ -136,6 +138,23 @@ public class ExpenseService {
                 expensePage.hasNext(),
                 expensePage.hasPrevious()
         );
+    }
+    @Transactional(readOnly = true)
+    public List<ExpenseResponse> listExpenseDate(Long userid , LocalDate start , LocalDate end){
+        List<Expense> expensePage = expenseRepo.findByUserAndExpenseDateBetween(
+                userRepo.getReferenceById(userid),
+                start,
+                end );
+        List<ExpenseResponse> list = expensePage.stream()
+                .map(e -> new ExpenseResponse(
+                        e.getId(),
+                        e.getAmount(),
+                        e.getExpenseDate(),
+                        e.getNote(),
+                        e.getCategory().getName()
+                ))
+                .toList();
+        return list;
     }
     @Transactional(readOnly = true)
     public PagedResponse<ExpenseResponse> listExpenseByCategoryAndDate(Long userid , DateAndCatReq req , int page , int size){
