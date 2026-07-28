@@ -27,7 +27,7 @@ public class ReportController {
     @GetMapping("/pdf")
     public ResponseEntity<byte[]> generatePdfReport( @RequestParam LocalDate fromDate,
                                                      @RequestParam LocalDate toDate ) {
-        logger.atInfo().log("Request for generating PDF report received for user {}", currentUserProvider.getCurrentUserId());
+        logger.atInfo().log("Request for generating PDF report received.");
         Long userid = currentUserProvider.getCurrentUserId();
         byte[] report = reportService.generateReport(userid, fromDate, toDate);
         return ResponseEntity.ok().body(report);

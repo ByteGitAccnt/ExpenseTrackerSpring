@@ -24,9 +24,9 @@ public class ExpenseController {
     @PostMapping
     public ResponseEntity<ExpenseResponse> addExpense(@Valid @RequestBody AddExpenseReq req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for creating expense received for user {}" ,userid);
+        logger.atInfo().log("Request for creating expense received." );
         ExpenseResponse response = expenseService.addExpense(userid,req);
-        logger.atInfo().log("Expense created for user {}"  , userid);
+        logger.atInfo().log("Expense created for user ");
         return ResponseEntity.ok(response);
     }
     @GetMapping
@@ -35,7 +35,7 @@ public class ExpenseController {
             @RequestParam(defaultValue = "10") int size
     ){
         Long userId = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for expense listing received for user {}", userId);
+        logger.atInfo().log("Request for expense listing received");
         // size is hardcoded for consistency , if need we can define with param with condition
         PagedResponse<ExpenseResponse> response = expenseService.listExpense(userId, page, size);
         return ResponseEntity.ok(response);
@@ -44,28 +44,28 @@ public class ExpenseController {
     @GetMapping("/date")
     public ResponseEntity<PagedResponse<ExpenseResponse>> list(@Valid @RequestBody DateReq req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for expense listing by date received for user {}" , userid);
+        logger.atInfo().log("Request for expense listing by date received.");
         PagedResponse<ExpenseResponse> response = expenseService.listExpenseByDate(userid ,req , req.getPage(), req.getSize());
         return ResponseEntity.ok(response);
     }
     @GetMapping("/category")
     public ResponseEntity<PagedResponse<ExpenseResponse>> list(@Valid @RequestBody DateAndCatReq req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for expense listing by date and category received for user {}" , userid);
+        logger.atInfo().log("Request for expense listing by date and category received.");
         PagedResponse<ExpenseResponse> response = expenseService.listExpenseByCategoryAndDate(userid ,req , req.getPage(), req.getSize());
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{exp_id}")
     public ResponseEntity<?> deleteExpense(@PathVariable Long exp_id){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for expense deletion received for user {}" , userid);
+        logger.atInfo().log("Request for expense deletion received.");
         expenseService.deleteExpense(userid,exp_id);
         return ResponseEntity.noContent().build();
     }
     @PatchMapping
     public ResponseEntity<ExpenseResponse> updateExpense(@Valid @RequestBody ExpenseUpdateReq req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for expense updation received for user {}", userid);
+        logger.atInfo().log("Request for expense updation received.");
         ExpenseResponse response = expenseService.updateExpense(userid,req);
         return ResponseEntity.ok(response);
     }
