@@ -75,7 +75,7 @@ public class UserService {
     @Transactional
     public UserResponse addIncome(Long userid, BigDecimal amnt , String desc){
         User user = userRepository.findByIdForUpdate(userid)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found for user:" + userid));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found for user."));
         user.setBalance(user.getBalance().add(amnt));
         transactionService.recordIncome(user , amnt,desc);
         auditService.logUpdate(userid,EntityType.INCOME,userid,"Balance", amnt.toString());

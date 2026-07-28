@@ -24,6 +24,7 @@ public class BalanceController {
     }
     @GetMapping("/balance")
     public ResponseEntity<?> balance(){
+        logger.atInfo().log("Checking balance. ");
         Long userid = currentUserProvider.getCurrentUserId();
         return ResponseEntity.ok(new AccntBalance(userService.getUserByid(userid).getBalance()));
     }

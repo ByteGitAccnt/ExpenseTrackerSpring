@@ -57,19 +57,19 @@ public class CategoryService {
             throw new ResourceAlreadyExists("category name already exists! for user:" + userId);
         }
         Category cat = catRepo.findByNameAndUser_Id(oldname.toLowerCase(), userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found for the name : " + oldname + " for the user : " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found for the name : " + oldname + " for the user ." ));
         cat.setName(newname);
         auditService.logUpdate(userId,EntityType.CATEGORY,cat.getId(),"NAME" , newname );
-        logger.atInfo().log("Category Updated successful for user: {} from {} to {}",userId,oldname,newname);
+        logger.atInfo().log("Category Updated successful for user from {} to {}",oldname,newname);
        return new CategoryResponse(cat.getId() , cat.getName());
     }
     @Transactional
     public void deleteCategory(Long userid, String name){
          Category cat = catRepo.findByNameAndUser_Id(name.toLowerCase() , userid)
-                 .orElseThrow(() -> new ResourceNotFoundException("Category not found for the name : " + name + " for the user : " + userid));
+                 .orElseThrow(() -> new ResourceNotFoundException("Category not found for the name : " + name + " for the user." ));
          catRepo.delete(cat);
          auditService.logSuccess(userid,EntityType.CATEGORY, cat.getId(), "Category: " + cat.getName() + "deleted successfully");
-         logger.atInfo().log("Category {} deleted successful for user {}" , name , userid);
+         logger.atInfo().log("Category {} deleted successful for user." , name );
     }
     @Transactional(readOnly = true)
     public List<CategoryResponseList> listCategory(Long userid){
@@ -82,7 +82,7 @@ public class CategoryService {
                 ))
                 .toList();
         if (!list.isEmpty())return list;
-        logger.atInfo().log("Category List don't exist for user {}" , userid);
+        logger.atInfo().log("Category List don't exist for user." );
         return new ArrayList<>();
     }
     public Category getByNameForUser(String name, Long userId) {

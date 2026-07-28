@@ -1,6 +1,5 @@
 package com.myApp.ExpenseTracker.Service;
 
-import com.myApp.ExpenseTracker.Exeception.ResourceNotFoundException;
 import com.myApp.ExpenseTracker.Model.Transaction;
 import com.myApp.ExpenseTracker.Model.User;
 import com.myApp.ExpenseTracker.Repository.TransactionRepository;

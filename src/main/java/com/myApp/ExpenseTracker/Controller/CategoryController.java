@@ -27,24 +27,24 @@ public class CategoryController {
     @PatchMapping
     public ResponseEntity<?> updateCategory(@Valid @RequestBody CategoryUpdateRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for category: {}  update received for user {}" ,req.getOld_name(), userid);
+        logger.atInfo().log("Request for category: {}  update received" ,req.getOld_name());
         CategoryResponse response = categoryService.updateCategory(userid,req.getOld_name(), req.getNew_name());
         return ResponseEntity.ok(response);
     }
     @DeleteMapping
     public ResponseEntity<?> deleteCategory(@Valid @RequestBody CategoryDeletionReq req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for category: {}  delete received for user {}" ,req.getName(), userid);
+        logger.atInfo().log("Request for category: {}  delete received" ,req.getName());
         categoryService.deleteCategory(userid, req.getName());
         return ResponseEntity.ok().build();
     }
     @GetMapping
     public ResponseEntity<?> listCategory(){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request for listing category received for user {}" ,userid);
+        logger.atInfo().log("Request for listing category received");
         List<CategoryResponseList> categoryList = categoryService.listCategory(userid);
         if (!categoryList.isEmpty()) return ResponseEntity.ok(categoryList);
-        logger.atWarn().log("Category list not found for user {}" , userid);
+        logger.atWarn().log("Category list not found");
         return ResponseEntity.notFound().build();
     }
 }

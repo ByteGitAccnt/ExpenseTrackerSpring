@@ -34,7 +34,7 @@ public class ReportService {
     }
 
     public byte[] generateReport(Long userid , LocalDate fromDate , LocalDate toDate) {
-        logger.info("Generating report for user: {}, from: {}, to: {}", userid, fromDate, toDate);
+        logger.info("Generating report for user from: {}, to: {}",  fromDate, toDate);
         BigDecimal totalBalance = userService.getBalance(userid);
         BigDecimal totalReserved = reservedService.getTotalReserved(userid) != null
                 ? reservedService.getTotalReserved(userid) : BigDecimal.ZERO;

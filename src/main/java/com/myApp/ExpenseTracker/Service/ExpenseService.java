@@ -50,7 +50,7 @@ public class ExpenseService {
             throw new RequiredException("Label required when reserved is true");
         }
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with userid:" + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found ."));
         BigDecimal amount = req.getAmount();
         if (req.getIsReserved()) {
             reservedService.withdrawAmount(
@@ -58,11 +58,11 @@ public class ExpenseService {
                     req.getLabel(),
                     amount
             );
-            logger.atInfo().log("Amount:{} deducted from reserve for user {}" , req.getAmount(),userId);
+            logger.atInfo().log("Amount:{} deducted from reserve for user." , req.getAmount());
         } else {
             BigDecimal available = user.getBalance().subtract(reservedService.getTotalReserved(userId));
             if (available.compareTo(amount) < 0) {
-                throw  new InsufficientBalanceException("Insufficient balance! for user {}"+ userId);
+                throw  new InsufficientBalanceException("Insufficient balance! for user .");
             }
         }
         user.withdraw(amount);
@@ -193,7 +193,7 @@ public class ExpenseService {
     @Transactional
     public void deleteExpense(Long userid, Long expid) {
         Expense exp = expenseRepo.findByIdAndUser_Id(expid, userid)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user:" + userid ));
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user." ));
         User user = userRepo.findByIdForUpdate(userid)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found!"));
 
@@ -207,7 +207,7 @@ public class ExpenseService {
     public ExpenseResponse updateExpense(Long userid , ExpenseUpdateReq req){
         Expense expense = expenseRepo
                 .findByIdAndUser_Id(req.getExp_id(), userid)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user:" + userid));
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found for user." ));
         if (req.getExp_date() != null) {
             expense.setExpenseDate(req.getExp_date());
         }
@@ -220,7 +220,7 @@ public class ExpenseService {
             expense.setCategory(category);
         }
         auditService.logUpdate(userid,EntityType.EXPENSE,req.getExp_id(),"Category,Note,Date",req.toString());
-        logger.atInfo().log("Expense updated successfully for user {}" , userid);
+        logger.atInfo().log("Expense updated successfully for user.");
         return new ExpenseResponse(
                 expense.getId(),
                 expense.getAmount(),

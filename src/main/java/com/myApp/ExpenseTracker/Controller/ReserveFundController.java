@@ -35,19 +35,21 @@ public class ReserveFundController {
     }
     @DeleteMapping("/{reserve_id}")
     public ResponseEntity<?> delete(@PathVariable Long reserve_id){
-        logger.atInfo().log("Request for deleting reserve fund received for label {}" ,reserve_id);
+        logger.atInfo().log("Request for deleting reserve fund received.");
         Long userid = currentUserProvider.getCurrentUserId();
         reservedService.deleteReserve(userid, reserve_id);
         return ResponseEntity.noContent().build();
     }
     @GetMapping
     public ResponseEntity<List<ReservedResponse>> listReserved() {
+        logger.atInfo().log("Request for listing reserve fund received.");
         Long userId = currentUserProvider.getCurrentUserId();
         List<ReservedResponse> response = reservedService.listReserved(userId);
         return ResponseEntity.ok(response);
     }
     @PutMapping
     public ResponseEntity<ReservedResponse> updateReserve(@Valid @RequestBody UpdateReserveRequest req){
+        logger.atInfo().log("Request for updating reserve fund received.");
         Long userid = currentUserProvider.getCurrentUserId();
         ReservedResponse response = reservedService.updateReserveLabel(userid , req);
         return ResponseEntity.ok(response);
@@ -55,21 +57,21 @@ public class ReserveFundController {
     @PostMapping("/deposit")
     public ResponseEntity<ReservedResponse> addMoney(@Valid @RequestBody ReservedMoneyRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.info("ReserveFundController.addMoney - UserID: {}, Label: {}, Amount: {}", userid, req.getLabel(), req.getAmount());
+        logger.info("ReserveFundController.addMoney request received Label: {}, Amount: {}", req.getLabel(), req.getAmount());
         ReservedResponse response = reservedService.addAmount(userid, req.getLabel().trim(), req.getAmount());
         return ResponseEntity.ok(response);
     }
     @PostMapping("/withdraw")
     public ResponseEntity<?> deductMoney(@Valid @RequestBody ReservedMoneyRequest req){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request received for deduct money for user {}" , userid);
+        logger.atInfo().log("Request received for deduct money for user.");
         ReservedResponse response = reservedService.withdrawAmount(userid, req.getLabel(), req.getAmount());
         return ResponseEntity.ok(response);
     }
     @GetMapping("/balance")
     public ResponseEntity<?> getBalance(){
         Long userid = currentUserProvider.getCurrentUserId();
-        logger.atInfo().log("Request received for Reserved balance for user {}" , userid);
+        logger.atInfo().log("Request received for Reserved balance for user." );
         return ResponseEntity.ok(new ReserveBalance(reservedService.getTotalReserved(userid)));
     }
 }
