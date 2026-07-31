@@ -1,4 +1,4 @@
-# ExpenseTrackerV2
+# ETrace
 
 A comprehensive, production-ready personal finance tracking backend built with Spring Boot. Track expenses, manage categories, reserve funds for future goals, and maintain complete audit logs—all with JWT authentication and configurable rate limiting.
 
